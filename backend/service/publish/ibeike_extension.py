@@ -110,16 +110,26 @@ def connect_to_extension(folder_name):
         print(f"🎬 视频文件：{video_file}")
         print(f"🖼️ 封面文件：{cover_file}")
         
-        # 解析content.txt获取标题和描述
+        # 解析 content.txt 获取标题和描述（支持多行标题）
         title = ""
         desc = ""
-        with open(content_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('title:'):
-                    title = line[6:].strip()
-                elif line.startswith('desc:'):
-                    desc = line[5:].strip()
+        try:
+            with open(content_file, 'r', encoding='utf-8') as f:
+                full_content = f.read()
+                
+                # 提取标题
+                if 'title: ' in full_content:
+                    start_title = full_content.find('title: ') + 7
+                    end_title = full_content.find('\ndesc: ')
+                    
+                    if end_title != -1:
+                        title = full_content[start_title:end_title].strip()
+                        # 提取描述 (从 desc: 之后开始)
+                        desc = full_content[end_title + 7:].strip()
+                    else:
+                        title = full_content[start_title:].strip()
+        except Exception as e:
+            print(f"❌ 解析内容文件失败: {e}")
         
         print(f"📝 读取到内容：标题='{title}', 描述='{desc}'")
         

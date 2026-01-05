@@ -61,7 +61,7 @@ class CoverController:
                     image_path = os.path.join(self.mask_dir, image_name)
                     
                     # 生成输出文件名，将冒号替换为下划线，避免Windows文件名问题
-                    output_filename = f"{os.path.splitext(image_name)[0]}_4_3_cropped.jpg"
+                    output_filename = image_name
                     
                     # 直接调用service层的cut_to_3_4方法裁剪图片
                     # 注意：cut_to_3_4方法默认使用self.input_image_path，需要修改为我们的图片路径

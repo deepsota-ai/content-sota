@@ -245,15 +245,15 @@
         width: calc(100% - 40px);
         padding: 15px;
     }
-    
+
     .crop-result-item {
         padding: 10px;
     }
-    
+
     .crop-result-item img {
         max-height: 150px;
     }
-    
+
     .aspect-btn {
         min-width: calc(33.33% - 6px);
     }

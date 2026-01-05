@@ -97,7 +97,7 @@ class ImageCutter:
         else:
             # 生成默认的输出文件名，将冒号替换为下划线，避免Windows文件名问题
             image_name = os.path.basename(self.input_image_path)
-            output_filename = f"{os.path.splitext(image_name)[0]}_4_3_cropped.jpg"
+            output_filename = image_name
             return self.crop_image(image, 3/4, output_filename)
 
 # 测试代码

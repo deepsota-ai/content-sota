@@ -212,9 +212,21 @@ def save_edited_image():
         import base64
         image_bytes = base64.b64decode(image_data)
         
-        # 保存图片到edit目录
-        edit_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coverGeneration', 'cover', 'edit')
-        image_path = os.path.join(edit_dir, filename)
+        # 确定保存目录：根据文件名映射到对应的素材文件夹
+        # 例如 filename="1.png" 或 "1.jpg" -> 保存到 data/publish/素材_1/
+        file_basename = os.path.splitext(filename)[0] # 获取序号，如 "1"
+        material_folder_name = f"素材_{file_basename}"
+        
+        publish_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'publish', material_folder_name)
+        
+        # 确保目标文件夹存在
+        if not os.path.exists(publish_dir):
+            os.makedirs(publish_dir)
+            
+        # 统一保存为 1.jpg，因为发布系统通常寻找 1.jpg 作为封面
+        # 如果用户坚持要原名，我们可以保留 filename，但根据之前的 publish_controller，它寻找 1.jpg
+        target_filename = "1.jpg"
+        image_path = os.path.join(publish_dir, target_filename)
         
         with open(image_path, 'wb') as f:
             f.write(image_bytes)

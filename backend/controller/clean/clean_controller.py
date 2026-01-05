@@ -10,7 +10,7 @@ class CleanController:
         # 定义需要清理的目录路径
         self.tip_dir = os.path.join(self.data_dir, "contentGeneration", "tip")
         self.cover_gen_dir = os.path.join(self.data_dir, "coverGeneration")
-        self.publish_dir = os.path.join(self.project_root, "publish") # publish 位于根目录下
+        self.publish_dir = os.path.join(self.data_dir, "publish")
 
     def clean_all(self):
         """执行所有清理操作"""

@@ -13,10 +13,14 @@
     flex-direction: column;
     align-items: center;
     gap: 30px;
+    height: auto;
+    overflow: visible;
 }
 
 /* 封面编辑区 */
 .cover-editor {
+    width: 100%;
+    max-width: 1200px;
     background: rgba(26, 26, 46, 0.7);
     border: 1px solid rgba(74, 144, 226, 0.3);
     border-radius: 20px;
@@ -30,27 +34,51 @@
 /* 编辑器容器 */
 .editor-container {
     width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    border: 2px dashed rgba(74, 144, 226, 0.5);
-    border-radius: 15px;
+    padding: 10px;
     display: flex;
     justify-content: center;
-    align-items: center;
-    transition: all 0.3s ease;
+    align-items: flex-start;
 }
 
-.editor-container:hover {
-    border-color: rgba(74, 144, 226, 0.8);
-    background: rgba(0, 0, 0, 0.4);
+/* 网格布局 */
+.canvas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
 }
 
 /* Canvas包装器 */
 .canvas-wrapper {
-    width: 100%;
-    height: 100%;
     position: relative;
-    overflow: hidden;
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(74, 144, 226, 0.4);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.canvas-wrapper:hover {
+    border-color: rgba(74, 144, 226, 0.8);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(74, 144, 226, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* 为包装器添加标号或名称 */
+.canvas-wrapper::after {
+    content: attr(data-filename);
+    display: block;
+    margin-top: 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    word-break: break-all;
+    text-align: center;
 }
 
 /* Canvas样式 */

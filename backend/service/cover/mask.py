@@ -96,7 +96,7 @@ class CoverGenerator:
         
         # 保存结果（如果是指定图片，则使用不同的输出文件名）
         if image_name:
-            output_path = os.path.join(self.mask_output_dir, f"{os.path.splitext(image_name)[0]}_with_mask.jpg")
+            output_path = os.path.join(self.mask_output_dir, image_name)
         else:
             output_path = self.output_image_path
         

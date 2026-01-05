@@ -30,10 +30,33 @@ class PublishController:
                 item_path = os.path.join(self.base_path, item)
                 if os.path.isdir(item_path):
                     # 统计文件夹中的文件数量
-                    file_count = len(os.listdir(item_path))
+                    files = os.listdir(item_path)
+                    file_count = len(files)
+                    
+                    # 尝试读取 1.txt 获取标题（支持多行）
+                    title = ""
+                    content_file = os.path.join(item_path, '1.txt')
+                    if os.path.exists(content_file):
+                        try:
+                            with open(content_file, 'r', encoding='utf-8') as f:
+                                full_content = f.read()
+                                if 'title: ' in full_content:
+                                    # 提取 title: 到 desc: 之间的内容
+                                    start_idx = full_content.find('title: ') + 7
+                                    end_idx = full_content.find('\ndesc: ')
+                                    
+                                    if end_idx != -1:
+                                        title = full_content[start_idx:end_idx].strip()
+                                    else:
+                                        # 如果没有 desc:，则取到最后
+                                        title = full_content[start_idx:].strip()
+                        except Exception as e:
+                            print(f"读取多行标题失败: {e}")
+                    
                     folders.append({
                         'name': item,
-                        'fileCount': file_count
+                        'fileCount': file_count,
+                        'title': title
                     })
             
             

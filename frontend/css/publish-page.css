@@ -39,15 +39,30 @@
 }
 
 .folder-item h3 {
-    margin: 10px 0;
+    margin: 10px 0 5px 0;
     font-size: 18px;
     color: #1f2937;
+    font-weight: 600;
+}
+
+.folder-item .folder-title {
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.8em;
 }
 
 .folder-item .folder-info {
-    color: #6b7280;
-    font-size: 14px;
-    margin-top: 10px;
+    color: #9ca3af;
+    font-size: 12px;
+    padding-top: 5px;
+    border-top: 1px dashed #e5e7eb;
 }
 
 .action-buttons {
@@ -133,8 +148,13 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .loading-text {
