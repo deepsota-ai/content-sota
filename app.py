@@ -165,7 +165,8 @@ def generate_cropped_image():
 @app.route('/api/publish/folders', methods=['GET'])
 def get_publish_folders():
     controller = PublishController()
-    success, data = controller.get_publish_folders()
+    date_folder = request.args.get('date') # 获取日期参数
+    success, data = controller.get_publish_folders(date_folder)
     if success:
         return jsonify(data), 200
     else:
@@ -184,7 +185,7 @@ def organize_content():
         return jsonify(data), 400
 
 # 发布内容API接口
-@app.route('/api/publish/<folder_name>', methods=['POST'])
+@app.route('/api/publish/<path:folder_name>', methods=['POST'])
 def publish_content(folder_name):
     controller = PublishController()
     success, data = controller.publish_content(folder_name)
@@ -213,13 +214,21 @@ def save_edited_image():
         image_bytes = base64.b64decode(image_data)
         
         # 确定保存目录：根据文件名映射到对应的素材文件夹
-        # 例如 filename="1.png" 或 "1.jpg" -> 保存到 data/publish/素材_1/
+        # 确定保存目录：根据文件名映射到对应的素材文件夹
+        # 例如 filename="1.png" 或 "1.jpg" -> 保存到 data/publish/{date}/素材_1/
         file_basename = os.path.splitext(filename)[0] # 获取序号，如 "1"
         material_folder_name = f"素材_{file_basename}"
         
-        publish_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'publish', material_folder_name)
+        # 获取当前日期 YYYY.M.D
+        from datetime import datetime
+        now = datetime.now()
+        date_str = f"{now.year}.{now.month}.{now.day}"
+        
+        publish_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'publish', date_str, material_folder_name)
         
         # 确保目标文件夹存在
+        # 注意：如果用户还没执行"整理内容"，这个文件夹可能不存在，我们需要创建它
+        # 这意味着我们可以先生成封面，后整理内容
         if not os.path.exists(publish_dir):
             os.makedirs(publish_dir)
             
@@ -235,11 +244,26 @@ def save_edited_image():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# 小红书封面自动完善API
+@app.route('/api/publish/xhs_perfect/<path:folder_name>', methods=['POST'])
+def xhs_perfect(folder_name):
+    try:
+        from backend.service.publish.ibeike_extension import xhs_perfect_cover
+        success = xhs_perfect_cover(folder_name)
+        
+        if success:
+            return jsonify({'success': True, 'message': '小红书封面上传指令已发送'}), 200
+        else:
+            return jsonify({'success': False, 'message': '操作失败，请检查浏览器是否已打开且处于发布编辑状态'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # 清理数据API接口
 @app.route('/api/clean-data', methods=['POST'])
 def clean_data():
     controller = CleanController()
-    success, data = controller.clean_all()
+    targets = request.json.get('targets', [])
+    success, data = controller.clean_all(targets)
     if success:
         return jsonify({'success': True, 'data': data}), 200
     else:

@@ -60,14 +60,20 @@
                     <button class="close-btn" id="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <p>确定要执行清理操作吗？</p>
-                    <p style="font-size: 0.9rem; color: #666; margin-top: 5px;">
-                        包含以下目录：<br>
-                        - data/contentGeneration/tip (txt文件)<br>
-                        - data/coverGeneration (所有图片)<br>
-                        - publish (所有文件)
+                    <p>请选择要清理的目录：</p>
+                    <div style="margin: 15px 0; text-align: left; padding-left: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <input type="checkbox" id="clean-cover" name="clean-target" value="cover" checked>
+                            <label for="clean-cover">封面生成目录 (data/coverGeneration)</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="clean-publish" name="clean-target" value="publish" checked>
+                            <label for="clean-publish">发布目录 (data/publish)</label>
+                        </div>
+                    </div>
+                    <p class="warning" style="color: #dc3545; font-size: 0.9rem; margin-top: 10px;">
+                        <i class="fas fa-exclamation-triangle"></i> 此操作不可恢复！
                     </p>
-                    <p class="warning">此操作不可恢复！</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" id="cancel-clean">取消</button>

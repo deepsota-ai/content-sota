@@ -12,13 +12,30 @@ class CleanController:
         self.cover_gen_dir = os.path.join(self.data_dir, "coverGeneration")
         self.publish_dir = os.path.join(self.data_dir, "publish")
 
-    def clean_all(self):
+    def clean_all(self, targets=None):
         """执行所有清理操作"""
-        results = {
-            # "tip": self._clean_tip_txt(), # 用户要求取消清理 tip 目录
-            "cover": self._clean_cover_images(),
-            "publish": self._clean_publish_folder()
-        }
+        results = {}
+        
+        # 如果没有指定目标，默认全部清理（保持兼容性）或者不清理？
+        # 根据需求，用户选择后才会调用，所以 targets 应该会有值
+        if targets is None:
+            # 默认行为，为了兼容可能得其他调用，虽然目前只有前端调用
+            # 这里我们假设 None 就是什么都不做，或者全部做？
+            # 安全起见，如果没传参，咱们维持原样：不做或全做。
+            # 鉴于这是一个"改进"，我们让它默认只在有明确指令时执行特定操作
+            # 但为了防止旧代码调用出错，如果没有 targets，我们可以设定默认值
+            # 不过根据 task.md，我们正在改变这个行为。
+            # 让我们设定：如果 targets 是 None 或空列表，则不执行任何清理 (或者报错)
+            # 但为了方便测试，先设为默认全清理（如果真有旧的调用）
+            # 或者更严谨点：targets 必须包含 key 才清理
+            pass
+
+        if targets and "cover" in targets:
+            results["cover"] = self._clean_cover_images()
+        
+        if targets and "publish" in targets:
+            results["publish"] = self._clean_publish_folder()
+            
         return True, results
 
     def _clean_tip_txt(self):

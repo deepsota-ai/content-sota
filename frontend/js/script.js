@@ -84,13 +84,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 确认清理事件
     confirmClean.addEventListener('click', async function () {
+        // 获取选中的目标
+        const targets = [];
+        const checkboxes = document.querySelectorAll('input[name="clean-target"]:checked');
+        checkboxes.forEach(cb => {
+            targets.push(cb.value);
+        });
+
+        if (targets.length === 0) {
+            alert('请至少选择一项要清理的内容');
+            return;
+        }
+
         const originalText = confirmClean.innerHTML;
         confirmClean.disabled = true;
         confirmClean.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 清理中...';
 
         try {
             const response = await fetch('/api/clean-data', {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ targets: targets })
             });
             const result = await response.json();
 

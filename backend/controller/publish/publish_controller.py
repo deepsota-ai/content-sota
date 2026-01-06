@@ -6,9 +6,14 @@ class PublishController:
         # 构建正确的 base_path，指向项目根目录下的 data/publish
         self.base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '..', 'data', 'publish')
     
-    def get_publish_folders(self):
+    def get_publish_folders(self, date_folder=None):
         """
         获取发布文件夹列表
+        
+        Args:
+            date_folder: 可选，日期文件夹名称。
+                         如果为空，返回日期目录列表 (如 ["2026.1.6", ...])
+                         如果不为空，返回该日期下的素材列表
         
         Returns:
             tuple: (成功标志, 数据/错误信息)
@@ -21,37 +26,59 @@ class PublishController:
                     'folders': []
                 }
             
+            # 确定要扫描的目标路径
+            target_path = self.base_path
+            if date_folder:
+                target_path = os.path.join(self.base_path, date_folder)
+                
+            if not os.path.exists(target_path):
+                 return True, {
+                    'success': True,
+                    'folders': []
+                }
+            
             # 获取所有文件和文件夹
-            all_items = os.listdir(self.base_path)
+            all_items = os.listdir(target_path)
             
             # 获取所有文件夹
             folders = []
+            
+            # 如果没有指定日期且不在日期目录下，我们列出的是日期文件夹
+            # 这里的判断逻辑是：如果是 date_folder=None，我们期望列出YYYY.M.D格式的文件夹
+            # 如果指定了 date_folder，我们期望列出 素材_i 格式的文件夹
+            
+            # 按修改时间逆序排序
+            all_items.sort(key=lambda x: os.path.getmtime(os.path.join(target_path, x)), reverse=True)
+
             for item in all_items:
-                item_path = os.path.join(self.base_path, item)
+                item_path = os.path.join(target_path, item)
                 if os.path.isdir(item_path):
                     # 统计文件夹中的文件数量
                     files = os.listdir(item_path)
                     file_count = len(files)
                     
-                    # 尝试读取 1.txt 获取标题（支持多行）
                     title = ""
-                    content_file = os.path.join(item_path, '1.txt')
-                    if os.path.exists(content_file):
-                        try:
-                            with open(content_file, 'r', encoding='utf-8') as f:
-                                full_content = f.read()
-                                if 'title: ' in full_content:
-                                    # 提取 title: 到 desc: 之间的内容
-                                    start_idx = full_content.find('title: ') + 7
-                                    end_idx = full_content.find('\ndesc: ')
-                                    
-                                    if end_idx != -1:
-                                        title = full_content[start_idx:end_idx].strip()
-                                    else:
-                                        # 如果没有 desc:，则取到最后
-                                        title = full_content[start_idx:].strip()
-                        except Exception as e:
-                            print(f"读取多行标题失败: {e}")
+                    
+                    # 如果指定了date_folder，说明我们在看素材列表，需要读取标题
+                    if date_folder:
+                        # 尝试读取 1.txt 获取标题（支持多行）
+                        content_file = os.path.join(item_path, '1.txt')
+                        if os.path.exists(content_file):
+                            try:
+                                with open(content_file, 'r', encoding='utf-8') as f:
+                                    full_content = f.read()
+                                    if 'title: ' in full_content:
+                                        # 提取 title: 到 desc: 之间的内容
+                                        start_idx = full_content.find('title: ') + 7
+                                        end_idx = full_content.find('\ndesc: ')
+                                        
+                                        if end_idx != -1:
+                                            title = full_content[start_idx:end_idx].strip()
+                                        else:
+                                            # 如果没有 desc:，则取到最后
+                                            title = full_content[start_idx:].strip()
+                            except Exception as e:
+                                print(f"读取多行标题失败: {e}")
                     
                     folders.append({
                         'name': item,
@@ -72,7 +99,7 @@ class PublishController:
     
     def organize_content(self, materials):
         """
-        整理内容，在data/publish目录下创建文件夹和文件
+        整理内容，在data/publish/{date}目录下创建文件夹和文件
         
         Args:
             materials: 包含标题和描述的素材列表
@@ -85,13 +112,25 @@ class PublishController:
             if not os.path.exists(self.base_path):
                 os.makedirs(self.base_path)
             
+            # 获取当前日期 YYYY.M.D
+            from datetime import datetime
+            now = datetime.now()
+            # 注意：用户要求 2026.1.6 这种格式（单数月日不补0），strftime %Y.%-m.%-d 在Windows上可能不支持 %-
+            # 手动拼接
+            date_str = f"{now.year}.{now.month}.{now.day}"
+            
+            # 创建日期文件夹路径
+            date_folder_path = os.path.join(self.base_path, date_str)
+            if not os.path.exists(date_folder_path):
+                os.makedirs(date_folder_path)
+            
             # 遍历每个素材，创建文件夹和文件
             for i, material in enumerate(materials):
                 # 使用标题作为文件夹名称，如果标题为空则使用默认名称
                 folder_name = f'素材_{i+1}'
                 
                 # 创建文件夹
-                folder_path = os.path.join(self.base_path, folder_name)
+                folder_path = os.path.join(date_folder_path, folder_name)
                 if not os.path.exists(folder_path):
                     os.makedirs(folder_path)
                 
@@ -100,6 +139,7 @@ class PublishController:
                 desc = material.get('desc', '')
                 
                 # 创建{标题}.txt文件，使用示例格式
+                # 明确指定文件名为 1.txt
                 file_name = f'1.txt'
                 file_path = os.path.join(folder_path, file_name)
                 
@@ -110,7 +150,7 @@ class PublishController:
             
             return True, {
                 'success': True,
-                'message': '内容整理成功'
+                'message': f'内容整理成功，已保存至 {date_str} 文件夹'
             }
         except Exception as e:
             return False, {

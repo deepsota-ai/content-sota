@@ -102,7 +102,7 @@ def connect_to_extension(folder_name):
             return False
         
         if not os.path.exists(cover_file):
-            print(f"❌ 未找到封面文件：{cover_file}")
+            print(f"❌ 未找到封面文件 (1.jpg 或 1.png)：{base_path}")
             return False
         
         print(f"📁 使用文件夹：{folder_name}")
@@ -148,10 +148,32 @@ def connect_to_extension(folder_name):
         video_upload_input = page.ele('css:input[type="file"][accept="video/*"]')
         video_upload_input.input(video_file)  # 在DrissionPage中，使用input()方法上传文件
         
-        # 上传封面图片
-        print("📤 上传封面图片...")
-        cover_upload_input = page.eles('css:input[type="file"][accept="image/*"]')[1]  # 选择第二个图片输入框（竖版封面）
-        cover_upload_input.input(cover_file)  # 在DrissionPage中，使用input()方法上传文件
+        # 上传封面图片 (横版和竖版封面一起上传)
+        print("📤 正在上传封面图片 (同时适配横版和竖版)...")
+        # 根据用户提供的 HTML，封面上传点通常具有特定的类名
+        cover_inputs = page.eles('css:input[type="file"][accept="image/*"]')
+        
+        # 备选：如果直接找 input 有干扰，可以先找到容器 div 再找里面的 input
+        if len(cover_inputs) < 2:
+            containers = page.eles('.border-dashed.cursor-pointer')
+            if containers:
+                inputs_in_containers = []
+                for c in containers:
+                    inp = c.ele('css:input[type="file"]', timeout=1)
+                    if inp: inputs_in_containers.append(inp)
+                if inputs_in_containers:
+                    cover_inputs = inputs_in_containers
+
+        if len(cover_inputs) >= 2:
+            print(f"✅ 找到 {len(cover_inputs)} 个图片上传点，正在逐个上传...")
+            for cover_input in cover_inputs:
+                cover_input.input(cover_file)
+                time.sleep(3)
+        elif len(cover_inputs) == 1:
+            print("⚠️ 仅找到 1 个图片上传点，正在上传...")
+            cover_inputs[0].input(cover_file)
+        else:
+            print("❌ 未找到任何封面上传点")
         
         # 等待上传完成
         print("⏳ 等待文件上传完成...")
@@ -162,6 +184,92 @@ def connect_to_extension(folder_name):
         return False
     
     return True
+
+def xhs_perfect_cover(folder_name):
+    """小红书封面自动完善
+    
+    Args:
+        folder_name: 素材文件夹名称
+    """
+    # 1. 配置连接到 9223 端口
+    co = ChromiumOptions()
+    co.set_local_port(9223)
+    
+    # 2. 初始化页面对象
+    page = ChromiumPage(addr_or_opts=co)
+    
+    # 3. 查找或打开小红书发布页
+    target_url = "https://creator.xiaohongshu.com/publish/publish?from=menu&target=video"
+    xhs_tab = None
+    tabs = page.get_tabs()
+    for tab in tabs:
+        if "creator.xiaohongshu.com" in tab.url:
+            xhs_tab = tab
+            page.activate_tab(tab.tab_id)
+            break
+            
+    if not xhs_tab:
+        print("🚀 未找到小红书页面，正在打开...")
+        xhs_tab = page.new_tab(target_url)
+    elif target_url not in xhs_tab.url:
+        print("🚀 正在跳转到小红书发布页...")
+        xhs_tab.get(target_url)
+    
+    # 等待页面加载
+    time.sleep(2)
+    
+    # 4. 执行封面上传操作
+    print(f"🎬 准备完善素材 {folder_name} 的小红书封面...")
+    
+    # 构建图片路径
+    script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    cover_file = os.path.join(script_dir, 'data', 'publish', folder_name, '1.jpg')
+    
+    if not os.path.exists(cover_file):
+        print(f"❌ 未找到封面文件：{cover_file}")
+        return False
+        
+    try:
+        # 查找“设置封面”元素
+        # 根据用户提供的 class: upload-cover
+        upload_btn = xhs_tab.ele('.upload-cover')
+        if not upload_btn:
+            # 备选：查找包含“设置封面”文字的元素
+            upload_btn = xhs_tab.ele('text=设置封面')
+            
+        if upload_btn:
+            print("📤 点击“设置封面”按钮以打开对话框...")
+            upload_btn.click()
+            time.sleep(5) # 等待弹窗出现
+            
+            print("📤 正在精准定位封面上传控件...")
+
+            # 根据终端反馈，第二个 input 具有 accept="image/png, image/jpeg, image/*"
+            # 我们直接使用 accept 属性作为特征选择器，这样更稳健，不受顺序影响
+            file_input = xhs_tab.ele('css:input[type="file"][accept*="image"]')
+
+            if file_input:
+                print(f"✅ 找到封面上传控件 (ID: {file_input.attr('data-v-29a4ce9a') or 'unknown'})，正在上传...")
+                file_input.input(cover_file)
+                time.sleep(3) # 等待上传进度条
+                return True
+            else:
+                print("❌ 未精准定位到封面 input[type='file'][accept*='image']")
+                # 最后的兜底：如果属性匹配不到，尝试点击后再找
+                upload_btn.click() 
+                time.sleep(1)
+                backup_input = xhs_tab.ele('css:input[type="file"][accept*="image"]')
+                if backup_input:
+                    backup_input.input(cover_file)
+                    return True
+                return False
+        else:
+            print("❌ 未找到‘设置封面’按钮，请确认已进入发布编辑页面")
+            return False
+            
+    except Exception as e:
+        print(f"❌ XHS 完善操作失败: {e}")
+        return False
 
 if __name__ == "__main__":
     # 启动Chrome并直接打开扩展页面
