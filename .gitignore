@@ -12,6 +12,9 @@ dist/
 Thumbs.db
 chrome_user_data
 .trae
-
+*.txt
+*.mov
+*.PNG
+*.jpg
 
 .env

@@ -31,9 +31,38 @@ window.addEventListener('DOMContentLoaded', () => {
     // 全局变量存储选中的日期
     let currentSelectedDate = '';
 
+    // 等待字体加载完成的函数
+    function waitForFontLoad(fontName, timeout = 5000) {
+        return new Promise((resolve, reject) => {
+            if (document.fonts && document.fonts.load) {
+                document.fonts.load(`16px "${fontName}"`)
+                    .then(() => {
+                        // 再次检查字体是否真的可用
+                        if (document.fonts.check(`16px "${fontName}"`)) {
+                            resolve();
+                        } else {
+                            reject(new Error('Font check failed'));
+                        }
+                    })
+                    .catch(() => reject(new Error('Font load failed')));
+
+                // 设置超时
+                setTimeout(() => reject(new Error('Font load timeout')), timeout);
+            } else {
+                // 浏览器不支持 Font Loading API，直接 resolve
+                resolve();
+            }
+        });
+    }
+
     // 获取裁剪后的图片列表和素材列表
     async function fetchData() {
         try {
+            // 0. 先等待字体加载完成
+            console.log('等待字体加载...');
+            await waitForFontLoad('XinQingNian');
+            console.log('字体加载完成');
+
             // 1. 首先获取所有日期文件夹
             const dateRes = await fetch('/api/publish/folders');
             const dateData = await dateRes.json();
@@ -128,12 +157,12 @@ window.addEventListener('DOMContentLoaded', () => {
                     const textObj = new fabric.IText(titleText, {
                         left: canvas.width / (2 * scale), // 注意zoom影响，这里除以scale回到原始坐标
                         top: canvas.height / (2 * scale),
+                        // fontFamily: 'sans-serif',
                         fontFamily: 'XinQingNian, sans-serif',
-                        fontSize: 46,
-                        fontWeight: 'bold',
-                        fill: '#fdf088',
+                        fontSize: 120,
+                        fill: '#f0d402',
                         stroke: '#000000',
-                        strokeWidth: 3,
+                        strokeWidth: 10,
                         paintFirst: 'stroke',
                         textAlign: 'center',
                         originX: 'center',
@@ -170,10 +199,11 @@ window.addEventListener('DOMContentLoaded', () => {
             left: x,
             top: y,
             fontFamily: 'XinQingNian, sans-serif',
-            fontSize: 40,
-            fill: '#fdf088',
+            fontSize: 100,
+            fontWeight: 'bold',
+            fill: '#f0d402ff',
             stroke: '#000000',
-            strokeWidth: 2,
+            strokeWidth: 4,
             paintFirst: 'stroke',
             textAlign: 'center',
             originX: 'center',

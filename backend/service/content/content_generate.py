@@ -56,7 +56,7 @@ class ContentCreatorService:
     def generate_title(self, material_content, title_tips):
         """根据素材和标题技巧生成标题"""
         try:
-            prompt = f"""作为一名专业的内容创作者，请根据以下素材和标题创作技巧，为健身相关内容生成3-5个吸引人的标题：
+            prompt = f"""作为一名专业的内容创作者，请根据以下素材和标题创作技巧，为程序员、技术、赚钱相关内容生成3-5个吸引人的标题：
 
                     【素材内容】
                     {material_content}
@@ -67,7 +67,7 @@ class ContentCreatorService:
                     请确保生成的标题：
                     1. 符合提供的技巧
                     2. 吸引人且有情绪痛点
-                    3. 与健身内容相关
+                    3. 与程序员、技术、赚钱内容相关
                     4. 不要说教，要有价值
                     5. 问题提问必须是反认知或痛点场景
 
@@ -100,7 +100,7 @@ class ContentCreatorService:
     def generate_hook(self, material_content, hook_tips):
         """根据素材和钩子技巧生成钩子"""
         try:
-            prompt = f"""作为一名专业的内容创作者，请根据以下素材和钩子创作技巧，为健身相关内容生成3-5个吸引人的开头钩子：
+            prompt = f"""作为一名专业的内容创作者，请根据以下素材和钩子创作技巧，为程序员、技术、赚钱相关内容生成3-5个吸引人的开头钩子：
 
                         【素材内容】
                         {material_content}
@@ -111,7 +111,7 @@ class ContentCreatorService:
                         请确保生成的钩子：
                         1. 符合提供的技巧，但要尽量使用不同的技巧模板，避免重复使用相同结构
                         2. 吸引人且有情绪痛点
-                        3. 与健身内容相关
+                        3. 与程序员、技术、赚钱内容相关
                         4. 能够吸引观众继续观看
                         5. 确保每个钩子的结构和表达方式都有明显差异，避免内容重合
 
