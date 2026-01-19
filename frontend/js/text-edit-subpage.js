@@ -28,20 +28,36 @@ window.addEventListener('DOMContentLoaded', () => {
     // 修改 canvases 存储结构为对象数组: { instance: fabric.Canvas, filename: string }
     const canvases = [];
 
+    // 全局变量存储选中的日期
+    let currentSelectedDate = '';
+
     // 获取裁剪后的图片列表和素材列表
     async function fetchData() {
         try {
-            // 并发获取图片列表和素材列表
-            const [imgRes, matRes] = await Promise.all([
-                fetch('/api/get_cropped_images'),
-                fetch('/api/publish/folders')
-            ]);
+            // 1. 首先获取所有日期文件夹
+            const dateRes = await fetch('/api/publish/folders');
+            const dateData = await dateRes.json();
 
+            let folders = [];
+            if (dateData.success && dateData.folders && dateData.folders.length > 0) {
+                // 默认选中第一个（最新）日期
+                currentSelectedDate = dateData.folders[0].name;
+                console.log('自动选中最新日期:', currentSelectedDate);
+
+                // 2. 获取该日期下的素材列表
+                const matRes = await fetch(`/api/publish/folders?date=${encodeURIComponent(currentSelectedDate)}`);
+                const matData = await matRes.json();
+                if (matData.success) {
+                    folders = matData.folders;
+                }
+            }
+
+            // 3. 获取裁剪图片列表
+            const imgRes = await fetch('/api/get_cropped_images');
             const imgData = await imgRes.json();
-            const matData = await matRes.json();
 
             if (imgData.images && imgData.images.length > 0) {
-                initCanvases(imgData.images, matData.folders || []);
+                initCanvases(imgData.images, folders);
             } else {
                 canvasContainer.innerHTML = '<div class="error-state"><i class="fas fa-image"></i><p>未找到裁剪后的图片</p></div>';
             }
@@ -104,14 +120,15 @@ window.addEventListener('DOMContentLoaded', () => {
                 // 提取图片序号，例如 "1.png" -> "1"
                 const fileNumber = fileName.split('.')[0];
                 // 查找对应的素材文件夹，例如 "素材_1"
-                const folder = folders.find(f => f.name === `素材_${fileNumber}`);
+                const folderName = `素材_${fileNumber}`;
+                const folder = folders.find(f => f.name === folderName);
 
                 if (folder && folder.title) {
                     const titleText = folder.title;
                     const textObj = new fabric.IText(titleText, {
                         left: canvas.width / (2 * scale), // 注意zoom影响，这里除以scale回到原始坐标
                         top: canvas.height / (2 * scale),
-                        fontFamily: 'Impact, Arial Black, sans-serif',
+                        fontFamily: 'XinQingNian, sans-serif',
                         fontSize: 46,
                         fontWeight: 'bold',
                         fill: '#fdf088',
@@ -152,7 +169,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const text = new fabric.IText('双击编辑', {
             left: x,
             top: y,
-            fontFamily: 'Arial',
+            fontFamily: 'XinQingNian, sans-serif',
             fontSize: 40,
             fill: '#fdf088',
             stroke: '#000000',
@@ -207,7 +224,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         imageData: dataURL,
-                        filename: newFilename
+                        filename: newFilename,
+                        date: currentSelectedDate // 传递选中的日期
                     })
                 });
 

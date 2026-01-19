@@ -20,7 +20,7 @@ def index():
 # 静态文件路由 - 统一处理所有静态资源
 @app.route('/<path:filename>')
 def serve_static(filename):
-    if filename.startswith('css/') or filename.startswith('js/'):
+    if filename.startswith('css/') or filename.startswith('js/') or filename.startswith('fonts/'):
         return send_from_directory(frontend_path, filename)
     return send_from_directory(os.path.join(frontend_path, 'html'), filename)
 
@@ -201,6 +201,7 @@ def save_edited_image():
         # 获取请求数据
         image_data = request.json.get('imageData')
         filename = request.json.get('filename')
+        date_param = request.json.get('date') # 获取日期参数
         
         if not image_data or not filename:
             return jsonify({'success': False, 'error': '缺少必要参数'}), 400
@@ -214,21 +215,22 @@ def save_edited_image():
         image_bytes = base64.b64decode(image_data)
         
         # 确定保存目录：根据文件名映射到对应的素材文件夹
-        # 确定保存目录：根据文件名映射到对应的素材文件夹
         # 例如 filename="1.png" 或 "1.jpg" -> 保存到 data/publish/{date}/素材_1/
         file_basename = os.path.splitext(filename)[0] # 获取序号，如 "1"
         material_folder_name = f"素材_{file_basename}"
         
-        # 获取当前日期 YYYY.M.D
-        from datetime import datetime
-        now = datetime.now()
-        date_str = f"{now.year}.{now.month}.{now.day}"
+        # 确定日期
+        if date_param:
+            date_str = date_param
+        else:
+            # 默认当前日期 YYYY.M.D
+            from datetime import datetime
+            now = datetime.now()
+            date_str = f"{now.year}.{now.month}.{now.day}"
         
         publish_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'publish', date_str, material_folder_name)
         
         # 确保目标文件夹存在
-        # 注意：如果用户还没执行"整理内容"，这个文件夹可能不存在，我们需要创建它
-        # 这意味着我们可以先生成封面，后整理内容
         if not os.path.exists(publish_dir):
             os.makedirs(publish_dir)
             

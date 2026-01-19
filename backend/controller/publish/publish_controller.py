@@ -48,7 +48,7 @@ class PublishController:
             # 如果指定了 date_folder，我们期望列出 素材_i 格式的文件夹
             
             # 按修改时间逆序排序
-            all_items.sort(key=lambda x: os.path.getmtime(os.path.join(target_path, x)), reverse=True)
+            all_items.sort(key=lambda x: os.path.getmtime(os.path.join(target_path, x)), reverse=False)
 
             for item in all_items:
                 item_path = os.path.join(target_path, item)

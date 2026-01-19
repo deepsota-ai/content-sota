@@ -63,16 +63,16 @@ class CoverController:
                     # 生成输出文件名，将冒号替换为下划线，避免Windows文件名问题
                     output_filename = image_name
                     
-                    # 直接调用service层的cut_to_3_4方法裁剪图片
-                    # 注意：cut_to_3_4方法默认使用self.input_image_path，需要修改为我们的图片路径
+                    # 直接调用service层的cut_to_3_2方法裁剪图片
+                    # 注意:cut_to_3_2方法默认使用self.input_image_path,需要修改为我们的图片路径
                     # 先保存当前input_image_path
                     old_input_path = self.cutter.input_image_path
                     
                     # 设置为当前图片路径
                     self.cutter.input_image_path = image_path
                     
-                    # 调用cut_to_3_4方法，传递输出文件名
-                    result = self.cutter.cut_to_3_4(output_filename)
+                    # 调用cut_to_3_2方法,传递输出文件名
+                    result = self.cutter.cut_to_3_2(output_filename)
                     
                     # 恢复原始input_image_path
                     self.cutter.input_image_path = old_input_path
@@ -85,5 +85,5 @@ class CoverController:
                     results.append({"image": image_name, "success": False, "error": str(e)})
             
             return True, {"results": results}
-        except Exception as e:
+        except Exception as e: 
             return False, {"error": str(e)}

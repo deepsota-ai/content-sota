@@ -85,20 +85,20 @@ class ImageCutter:
             print(f"保存裁剪后的图片失败: {str(e)}")
             return None
     
-    def cut_to_3_4(self, output_filename=None):
-        """将图片裁剪为3:4比例"""
+    def cut_to_3_2(self, output_filename=None):
+        """将图片裁剪为3:2比例"""
         image = self.open_image(self.input_image_path)
         if not image:
             return None
         
-        # 3:4比例的宽高比为0.75 (3/4)
+        # 3:2比例的宽高比为1.5 (3/2)
         if output_filename:
-            return self.crop_image(image, 3/4, output_filename)
+            return self.crop_image(image, 3/2, output_filename)
         else:
-            # 生成默认的输出文件名，将冒号替换为下划线，避免Windows文件名问题
+            # 生成默认的输出文件名,将冒号替换为下划线,避免Windows文件名问题
             image_name = os.path.basename(self.input_image_path)
             output_filename = image_name
-            return self.crop_image(image, 3/4, output_filename)
+            return self.crop_image(image, 3/2, output_filename)
 
 # 测试代码
 if __name__ == "__main__":
