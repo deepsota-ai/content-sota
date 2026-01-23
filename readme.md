@@ -1,67 +1,183 @@
-# 设想功能
-1. ai根据素材+技巧制作标题、钩子（Content Generation
-2. 自动制作封面（Cover Generation
-3. 搭配爱贝壳完善发布（Publishing Enhancement
-4. 在视频写评论来打广告（Comment Advertising
+# 内容创作者助手
 
-# 实现
-## 自动根据素材+技巧制作标题、钩子
-1. 准备标题技巧.txt，钩子技巧.txt
-2. 读取素材.txt，ai根据技巧.txt制作标题、钩子
+一个自动化的内容创作辅助工具，帮助快速生成标题、钩子、制作封面并发布到小红书等平台。
 
-## 自动制作封面
-1. 加上蒙版
-2. 原图分成3:4，3:2
-3. 加上文字，由ai来制作有点难，还是自己加比较好
+## 功能概述
 
-## 搭配爱贝壳完善发布
-1. 打开爱贝壳网站
-2. 填充标题、视频、封面，点击发布
-3. 在小红书页面上传封面
+1. **AI 内容生成** - 根据素材和技巧自动生成标题、钩子
+2. **封面生成** - 自动添加蒙版、裁剪图片、文字编辑
+3. **发布完善** - 搭配爱贝壳完善发布流程
+4. **广告推广** - 在评论区发布广告
 
-## 在视频写评论来打广告
-1. 打开抖音、小红书、b站主页的第一个视频
-2. 写评论发广告
+## 技术栈
 
-# 前端
-## 整体布局
-## 1. 导航页
-- 顶部导航栏包含5个主要功能按钮：清理、内容生成、封面生成、发布完善、广告
-- 每个按钮配有图标和文字说明
-- 选中状态有明显视觉反馈（如高亮、下划线等）
+### 后端
+- Python + Flask
+- Google Gemini API (AI 内容生成)
+- 图像处理 (Pillow)
 
-### 清理功能
-- 点击"清理"按钮后，弹出确认对话框
-- 确认后清空data/material、data/tip目录下的所有文件
-- 清理完成后显示成功提示
+### 前端
+- HTML5 + CSS3 + JavaScript
+- Fabric.js (画布编辑)
+- 响应式设计
 
-## 2. 内容生成页
-### 素材展示区
-- 最上面显示7个素材的列表（或卡片形式）
-- 每个素材卡片包含预览内容
+## 项目结构
 
-### 操作区
-- 下面包含"生成"按钮
+```
+contentCreatorHelper/
+├── backend/                    # 后端代码
+│   ├── app.py                 # Flask 应用入口
+│   ├── controllers/           # 控制器
+│   │   ├── content_gen_controller.py
+│   │   ├── cover_gen_controller.py
+│   │   ├── publish_controller.py
+│   │   └── clean_controller.py
+│   └── service/               # 服务层
+│       ├── content/           # 内容生成服务
+│       ├── cover/             # 封面生成服务
+│       ├── publish/           # 发布服务
+│       └── clean/             # 清理服务
+├── frontend/                  # 前端代码
+│   ├── html/                  # HTML 页面
+│   │   ├── index.html         # 首页
+│   │   ├── content-generation.html
+│   │   ├── cover-generator.html
+│   │   ├── text-edit-subpage.html
+│   │   └── publish.html
+│   ├── css/                   # 样式文件
+│   │   └── style.css
+│   ├── js/                    # JavaScript 文件
+│   │   ├── content-gen.js
+│   │   ├── cover-generator.js
+│   │   ├── text-edit-subpage.js
+│   │   └── publish.js
+│   └── fonts/                 # 字体文件
+│       └── XinQingNian.otf
+└── data/                      # 数据目录
+    ├── material/              # 素材文件
+    ├── tip/                   # 技巧文件
+    ├── coverGeneration/       # 封面生成相关
+    └── publish/               # 发布相关数据
+```
 
-### 结果展示区
-- 展示生成的标题和钩子内容
-- 同样以卡片形式 标题、钩子内容
+## 功能说明
 
-## 3. 封面生成页
-又新增导航栏：蒙版、文字编辑、裁剪
-### 编辑工具栏
-- 添加蒙版：一键添加透明度60%的蒙版，列表更新为蒙版图片
-- 文字编辑：
-  - 加载7张蒙版图
-  - 点击蒙版图，下侧新增大一点的图 供编辑文字
-  - 如同p图一样，直接在图片上编辑文字
-  - 调整字体大小（滑动条或输入框）
-- 裁剪功能：
-  - 加载7张文字编辑图
-  - 同时裁剪为（3:4、3:2）
+### 1. 内容生成 (Content Generation)
 
-## 4. 发布完善页
+根据素材内容和标题/钩子创作技巧，使用 AI 自动生成吸引人的标题和开头钩子。
 
-## 样式要求
-- 简洁现代的UI设计
-- 清晰的视觉层次和操作引导
+**支持领域：**
+- 程序员
+- 技术
+- 赚钱
+
+**功能特性：**
+- 读取素材文件 (`material.txt`)
+- 读取标题技巧 (`tip/title.txt`)
+- 读取钩子技巧 (`tip/hook.txt`)
+- AI 自动生成 3-5 个标题和钩子
+- 支持文案优化（有情绪、有画面、有代入感）
+
+### 2. 封面生成 (Cover Generation)
+
+完整的封面制作流程，支持蒙版、裁剪、文字编辑。
+
+**流程：**
+1. **蒙版** - 为图片添加透明蒙版
+2. **文字编辑** - 在画布上编辑文字，支持自定义字体
+3. **裁剪** - 同时裁剪为 3:4 和 3:2 两种比例
+
+**文字编辑特性：**
+- 多图画布同时编辑
+- 双击画布添加文字
+- 键盘 Delete 删除选中文字
+- 支持字体大小、颜色、描边调整
+- 使用 XinQingNian 自定义字体
+- 批量保存功能
+
+### 3. 发布完善 (Publishing Enhancement)
+
+- 按日期管理素材
+- 集成爱贝壳发布平台
+- 一键填充标题、视频、封面
+
+### 4. 清理功能 (Cleaning)
+
+一键清理数据目录：
+- 清空 `data/material` 目录
+- 清空 `data/tip` 目录
+- 清理前需要二次确认
+
+## 环境配置
+
+### 前置要求
+- Python 3.8+
+- Node.js (可选，用于前端开发)
+
+### 安装步骤
+
+1. **克隆项目**
+   ```bash
+   git clone <repository-url>
+   cd contentCreatorHelper
+   ```
+
+2. **安装 Python 依赖**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **配置环境变量**
+
+   创建 `.env` 文件在项目根目录：
+   ```
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+4. **准备数据文件**
+
+   - 将素材内容放入 `data/material/material.txt`
+   - 将标题技巧放入 `data/tip/title.txt`
+   - 将钩子技巧放入 `data/tip/hook.txt`
+
+5. **运行后端**
+   ```bash
+   cd backend
+   python app.py
+   ```
+
+6. **访问前端**
+
+   在浏览器中打开 `frontend/html/index.html`
+
+## API 接口
+
+### 内容生成
+- `POST /api/generate` - 生成标题和钩子
+- `POST /api/optimize_content` - 优化文案
+
+### 封面生成
+- `GET /api/mask_images` - 获取蒙版图片列表
+- `POST /api/add_mask` - 添加蒙版
+- `GET /api/get_text_edit_images` - 获取文字编辑图片列表
+- `POST /api/save_edited_image` - 保存编辑后的图片
+- `GET /api/get_cropped_images` - 获取裁剪图片列表
+- `POST /api/crop_images` - 裁剪图片
+
+### 发布
+- `GET /api/publish/folders` - 获取日期文件夹
+- `POST /api/publish/save` - 保存发布内容
+
+### 清理
+- `POST /api/clean` - 清理数据目录
+
+## 浏览器兼容性
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## 许可证
+
+MIT License
