@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容创作者助手 - 单篇创作</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/content-generator.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 步骤指示条 */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin: 30px auto 40px;
+            max-width: 700px;
+            flex-wrap: wrap;
+        }
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: default;
+        }
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(74,144,226,0.1);
+            border: 2px solid rgba(74,144,226,0.3);
+            color: #607080;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .step-label {
+            font-size: 11px;
+            color: #607080;
+            white-space: nowrap;
+            transition: color 0.3s ease;
+        }
+        .step-item.active .step-circle {
+            background: rgba(74,144,226,0.3);
+            border-color: #4a90e2;
+            color: #4a90e2;
+            box-shadow: 0 0 10px rgba(74,144,226,0.4);
+        }
+        .step-item.active .step-label {
+            color: #4a90e2;
+        }
+        .step-item.completed .step-circle {
+            background: rgba(46,204,113,0.2);
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+        .step-item.completed .step-label {
+            color: #2ecc71;
+        }
+        .step-connector {
+            width: 40px;
+            height: 2px;
+            background: rgba(74,144,226,0.2);
+            margin: 0 4px;
+            margin-bottom: 22px;
+            transition: background 0.3s ease;
+        }
+        .step-connector.completed {
+            background: rgba(46,204,113,0.5);
+        }
+
+        /* 单步区块 */
+        .wizard-step {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            width: 100%;
+        }
+        .wizard-step-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #4a90e2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* 草稿/选项卡片 */
+        .option-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-card {
+            background: rgba(26,26,46,0.8);
+            border: 1px solid rgba(74,144,226,0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .option-card:hover {
+            border-color: rgba(74,144,226,0.7);
+            background: rgba(32,32,64,0.9);
+        }
+        .option-card.selected {
+            border-color: #4a90e2;
+            background: rgba(74,144,226,0.15);
+            color: #e0e0e0;
+            box-shadow: 0 0 12px rgba(74,144,226,0.25);
+        }
+
+        /* 正文输入框 */
+        .prompt-textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 14px;
+            background: rgba(74,144,226,0.05);
+            border: 1px solid rgba(74,144,226,0.25);
+            border-radius: 10px;
+            color: #e0e0e0;
+            font-size: 14px;
+            resize: vertical;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+        .prompt-textarea:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74,144,226,0.2);
+        }
+
+        /* 行内按钮组 */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* 二级按钮（重新生成 / 跳过） */
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid rgba(74,144,226,0.4);
+            color: #4a90e2;
+            font-size: 14px;
+            padding: 9px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .btn-secondary:hover {
+            background: rgba(74,144,226,0.12);
+            border-color: #4a90e2;
+        }
+
+        /* 图片上传区 */
+        .upload-zone {
+            border: 2px dashed rgba(74,144,226,0.35);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            color: #607080;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: #4a90e2;
+            background: rgba(74,144,226,0.05);
+        }
+        .upload-zone input[type=file] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .upload-zone i {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+            color: rgba(74,144,226,0.5);
+        }
+        .upload-zone p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* 图片预览 */
+        .cover-preview-wrap {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .preview-box {
+            flex: 1;
+            min-width: 200px;
+            max-width: 320px;
+        }
+        .preview-box label {
+            display: block;
+            font-size: 12px;
+            color: #8090a0;
+            margin-bottom: 6px;
+        }
+        .preview-box img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(74,144,226,0.3);
+        }
+        .preview-placeholder {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: rgba(26,26,46,0.6);
+            border: 1px dashed rgba(74,144,226,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #607080;
+            font-size: 13px;
+        }
+
+        /* 多配图列表 */
+        .extra-images-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .extra-image-thumb {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid rgba(74,144,226,0.3);
+        }
+
+        /* 最终预览区 */
+        .review-block {
+            background: rgba(26,26,46,0.8);
+            border: 1px solid rgba(74,144,226,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .review-block label {
+            font-size: 12px;
+            color: #8090a0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .review-block p {
+            color: #dde;
+            font-size: 14px;
+            line-height: 1.7;
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* 消息提示 */
+        .msg {
+            margin-top: 12px;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+        }
+        .msg-success { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+        .msg-error   { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+        .msg-info    { background: rgba(74,144,226,0.12); color: #4a90e2; border: 1px solid rgba(74,144,226,0.3); }
+
+        /* 生成中动画覆盖 */
+        .loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 30px;
+            color: #4a90e2;
+        }
+        .loading-overlay i { font-size: 30px; animation: spin 1s linear infinite; }
+
+        /* 封面画布编辑器 */
+        .cover-canvas-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            margin-top: 16px;
+        }
+        #cover-canvas {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(74,144,226,0.35);
+            background: #111;
+            display: block;
+        }
+        .cover-tools {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .tool-group-label {
+            font-size: 12px;
+            color: #8090a0;
+            white-space: nowrap;
+        }
+        .tool-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #ccc;
+            font-size: 13px;
+            padding: 6px 14px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tool-btn:hover { background: rgba(74,144,226,0.18); border-color: #4a90e2; color: #4a90e2; }
+        .tool-btn.active { background: rgba(74,144,226,0.25); border-color: #4a90e2; color: #4a90e2; }
+        .tool-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255,255,255,0.1);
+            margin: 0 4px;
+        }
+        .text-panel {
+            width: 100%;
+            background: rgba(26,26,46,0.8);
+            border: 1px solid rgba(74,144,226,0.25);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .text-panel input[type=text] {
+            flex: 1;
+            min-width: 140px;
+            padding: 8px 12px;
+            background: rgba(74,144,226,0.07);
+            border: 1px solid rgba(74,144,226,0.25);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .text-panel input[type=text]:focus { outline: none; border-color: #4a90e2; }
+        .text-panel select {
+            padding: 7px 10px;
+            background: rgba(26,26,46,0.9);
+            border: 1px solid rgba(74,144,226,0.25);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .color-swatches { display: flex; gap: 6px; }
+        .color-swatch {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .color-swatch.active { border-color: #4a90e2; }
+
+        /* 保存后操作按钮区 */
+        .post-save-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 顶部导航栏 -->
+    <header class="navbar">
+        <h1 class="logo">
+            <i class="fas fa-feather-alt"></i>
+            单篇创作向导
+        </h1>
+        <div class="nav-buttons">
+            <button class="btn btn-back" id="main-btn">
+                <i class="fas fa-arrow-left"></i>
+                返回内容生成
+            </button>
+            <button class="btn btn-back" id="back-btn">
+                <i class="fas fa-home"></i>
+                返回首页
+            </button>
+        </div>
+    </header>
+
+    <main class="content-generator">
+        <!-- 步骤指示条 -->
+        <div class="step-indicator" id="step-indicator">
+            <div class="step-item active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">草稿</div>
+            </div>
+            <div class="step-connector" id="conn-1-2"></div>
+            <div class="step-item" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">标题</div>
+            </div>
+            <div class="step-connector" id="conn-2-3"></div>
+            <div class="step-item" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label">钩子</div>
+            </div>
+            <div class="step-connector" id="conn-3-4"></div>
+            <div class="step-item" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label">封面</div>
+            </div>
+            <div class="step-connector" id="conn-4-5"></div>
+            <div class="step-item" data-step="5">
+                <div class="step-circle">5</div>
+                <div class="step-label">配图</div>
+            </div>
+            <div class="step-connector" id="conn-5-6"></div>
+            <div class="step-item" data-step="6">
+                <div class="step-circle">6</div>
+                <div class="step-label">保存</div>
+            </div>
+        </div>
+
+        <!-- Step 1: 草稿生成 -->
+        <section class="wizard-step" id="step-section-1">
+            <div class="wizard-step-title">
+                <i class="fas fa-pen-nib"></i> 第一步：描述创作需求
+            </div>
+            <div class="model-selector-wrap" style="margin-bottom:16px;">
+                <label for="model-select"><i class="fas fa-robot"></i> 模型</label>
+                <select id="model-select" class="model-select"><option value="">加载中...</option></select>
+            </div>
+            <textarea class="prompt-textarea" id="user-prompt"
+                placeholder="用一句话描述创作需求，例如：为新款卡其色美甲写一篇小红书文案"></textarea>
+            <div class="btn-row">
+                <button class="btn generate-btn" id="gen-draft-btn">
+                    <i class="fas fa-magic"></i> 生成草稿
+                </button>
+            </div>
+            <div id="draft-area" style="margin-top:20px;"></div>
+        </section>
+
+        <!-- Step 2: 标题选择 -->
+        <section class="wizard-step" id="step-section-2" style="display:none;">
+            <div class="wizard-step-title">
+                <i class="fas fa-heading"></i> 第二步：选择标题
+            </div>
+            <div id="title-area"><div class="loading-overlay"><i class="fas fa-spinner"></i><span>正在生成标题…</span></div></div>
+            <div class="btn-row" style="margin-top:12px;">
+                <button class="btn btn-secondary" id="regen-title-btn" style="display:none;">
+                    <i class="fas fa-redo"></i> 重新生成
+                </button>
+            </div>
+        </section>
+
+        <!-- Step 3: 钩子选择 -->
+        <section class="wizard-step" id="step-section-3" style="display:none;">
+            <div class="wizard-step-title">
+                <i class="fas fa-play-circle"></i> 第三步：选择开头钩子
+            </div>
+            <div id="hook-area"><div class="loading-overlay"><i class="fas fa-spinner"></i><span>正在生成钩子…</span></div></div>
+            <div class="btn-row" style="margin-top:12px;">
+                <button class="btn btn-secondary" id="regen-hook-btn" style="display:none;">
+                    <i class="fas fa-redo"></i> 重新生成
+                </button>
+            </div>
+        </section>
+
+        <!-- Step 4: 封面图处理 -->
+        <section class="wizard-step" id="step-section-4" style="display:none;">
+            <div class="wizard-step-title">
+                <i class="fas fa-image"></i> 第四步：封面图编辑（可选）
+            </div>
+            <p style="color:#8090a0;font-size:13px;margin-bottom:16px;">上传封面图，支持裁剪比例、蒙版、添加文字。也可跳过直接进入配图上传。</p>
+
+            <!-- 上传区（上传后隐藏） -->
+            <div class="upload-zone" id="cover-upload-zone">
+                <input type="file" id="cover-file-input" accept="image/*">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>点击或拖拽上传封面图片</p>
+            </div>
+
+            <!-- 画布编辑区（上传后显示） -->
+            <div class="cover-canvas-wrap" id="cover-editor-wrap" style="display:none;">
+                <canvas id="cover-canvas" width="400" height="400"></canvas>
+
+                <!-- 工具栏 -->
+                <div class="cover-tools">
+                    <!-- 裁剪比例 -->
+                    <div class="tool-group">
+                        <span class="tool-group-label"><i class="fas fa-crop-alt"></i> 裁剪：</span>
+                        <button class="tool-btn active" data-ratio="free">自由</button>
+                        <button class="tool-btn" data-ratio="1:1">1:1</button>
+                        <button class="tool-btn" data-ratio="3:4">3:4</button>
+                        <button class="tool-btn" data-ratio="4:3">4:3</button>
+                    </div>
+                    <div class="tool-divider"></div>
+                    <!-- 蒙版 -->
+                    <div class="tool-group">
+                        <button class="tool-btn" id="toggle-mask-btn">
+                            <i class="fas fa-layer-group"></i> 蒙版
+                        </button>
+                    </div>
+                    <div class="tool-divider"></div>
+                    <!-- 文字 -->
+                    <div class="tool-group">
+                        <button class="tool-btn" id="toggle-text-btn">
+                            <i class="fas fa-font"></i> 文字
+                        </button>
+                        <button class="tool-btn" id="undo-text-btn" title="撤销上一行文字">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 文字编辑面板 -->
+                <div class="text-panel" id="text-panel" style="display:none;">
+                    <input type="text" id="cover-text-input" placeholder="输入文字…" maxlength="30">
+                    <select id="cover-text-size">
+                        <option value="28">小 28px</option>
+                        <option value="40" selected>中 40px</option>
+                        <option value="56">大 56px</option>
+                        <option value="72">特大 72px</option>
+                    </select>
+                    <select id="cover-text-pos">
+                        <option value="top">上方</option>
+                        <option value="center" selected>居中</option>
+                        <option value="bottom">下方</option>
+                    </select>
+                    <div class="color-swatches">
+                        <div class="color-swatch active" data-color="#ffffff" style="background:#fff;" title="白色"></div>
+                        <div class="color-swatch" data-color="#000000" style="background:#000;border-color:rgba(255,255,255,0.2);" title="黑色"></div>
+                        <div class="color-swatch" data-color="#FFD700" style="background:#FFD700;" title="金色"></div>
+                        <div class="color-swatch" data-color="#FF4D6D" style="background:#FF4D6D;" title="玫红"></div>
+                    </div>
+                    <button class="btn btn-secondary" id="add-text-btn">
+                        <i class="fas fa-plus"></i> 添加
+                    </button>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="btn-row" style="margin-top:16px;">
+                <button class="btn generate-btn" id="save-cover-btn" style="display:none;">
+                    <i class="fas fa-check"></i> 保存封面
+                </button>
+                <button class="btn btn-secondary" id="skip-cover-btn">
+                    <i class="fas fa-forward"></i> 跳过封面
+                </button>
+            </div>
+            <div id="cover-msg"></div>
+        </section>
+
+        <!-- Step 5: 配图上传 -->
+        <section class="wizard-step" id="step-section-5" style="display:none;">
+            <div class="wizard-step-title">
+                <i class="fas fa-images"></i> 第五步：上传内容配图（可选）
+            </div>
+            <p style="color:#8090a0;font-size:13px;margin-bottom:16px;">上传第 2-9 张配图（原图直接保存），可跳过。</p>
+            <div class="upload-zone" id="extra-upload-zone">
+                <input type="file" id="extra-file-input" accept="image/*" multiple>
+                <i class="fas fa-images"></i>
+                <p>点击或拖拽上传配图（可多选）</p>
+            </div>
+            <div class="extra-images-list" id="extra-images-list"></div>
+            <div class="btn-row" style="margin-top:16px;">
+                <button class="btn generate-btn" id="upload-extra-btn" style="display:none;">
+                    <i class="fas fa-upload"></i> 上传配图
+                </button>
+                <button class="btn btn-secondary" id="skip-extra-btn">
+                    <i class="fas fa-forward"></i> 跳过 / 完成
+                </button>
+            </div>
+            <div id="extra-msg"></div>
+        </section>
+
+        <!-- Step 6: 确认保存 -->
+        <section class="wizard-step" id="step-section-6" style="display:none;">
+            <div class="wizard-step-title">
+                <i class="fas fa-save"></i> 第六步：确认并保存
+            </div>
+            <div class="review-block">
+                <label>标题</label>
+                <p id="review-title">—</p>
+            </div>
+            <div class="review-block">
+                <label>开头钩子</label>
+                <p id="review-hook">—</p>
+            </div>
+            <div class="review-block">
+                <label>正文草稿</label>
+                <p id="review-draft">—</p>
+            </div>
+            <div class="review-block">
+                <label>标签</label>
+                <p id="review-hashtags" style="color:#8090a0;">（加载中…）</p>
+            </div>
+            <div class="btn-row" style="margin-top:20px;">
+                <button class="btn generate-btn" id="save-btn">
+                    <i class="fas fa-folder-plus"></i> 保存到发布目录
+                </button>
+            </div>
+            <div id="save-msg"></div>
+            <div class="post-save-actions" id="post-save-actions" style="display:none;">
+                <button class="btn generate-btn" id="goto-publish-btn" style="background:linear-gradient(135deg,#2ecc71,#27ae60);">
+                    <i class="fas fa-paper-plane"></i> 前往发布管理
+                </button>
+                <button class="btn btn-secondary" id="new-post-btn">
+                    <i class="fas fa-plus"></i> 再创一篇
+                </button>
+                <button class="btn btn-secondary" id="goto-home-btn">
+                    <i class="fas fa-home"></i> 返回首页
+                </button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="../../js/single-post.js"></script>
+</body>
+</html>

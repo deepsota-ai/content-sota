@@ -1,13 +1,24 @@
 import subprocess
 import os
 import time
+from dotenv import load_dotenv
 from DrissionPage import ChromiumPage, ChromiumOptions
+
+# 加载 .env（从项目根目录）
+_here = os.path.dirname(os.path.abspath(__file__))
+_root = os.path.dirname(os.path.dirname(os.path.dirname(_here)))
+load_dotenv(os.path.join(_root, '.env'))
+
+def _get_config():
+    """读取发布相关环境变量，缺失时给出明确提示"""
+    chrome_path      = os.getenv("CHROME_PATH",          r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+    user_data_dir    = os.getenv("CHROME_USER_DATA_DIR", r"D:\Users\ChromeAutomationProfile")
+    extension_id     = os.getenv("IBEIKE_EXTENSION_ID",  "jejejajkcbhejfiocemmddgbkdlhhngm")
+    return chrome_path, user_data_dir, extension_id
 
 def start_chrome_with_extension():
     """启动Chrome并直接打开扩展页面"""
-    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-    user_data_dir = r"D:\Users\ChromeAutomationProfile"
-    target_extension_id = "jejejajkcbhejfiocemmddgbkdlhhngm"
+    chrome_path, user_data_dir, target_extension_id = _get_config()
     extension_url = f"chrome-extension://{target_extension_id}/options.html"
     
     if not os.path.exists(chrome_path):
@@ -44,19 +55,19 @@ def start_chrome_with_extension():
 
 def connect_to_extension(folder_name):
     """连接到已打开的Chrome扩展页面
-    
+
     Args:
         folder_name: 发布文件夹名称，用于动态生成文件路径
     """
     # 1. 配置连接到 9223 端口
     co = ChromiumOptions()
     co.set_local_port(9223) # 指定连接端口为 9223
-    
+
     # 2. 初始化页面对象
     page = ChromiumPage(addr_or_opts=co)
-    
+
     # 3. 定义目标插件信息
-    target_extension_id = "jejejajkcbhejfiocemmddgbkdlhhngm"
+    _, _, target_extension_id = _get_config()
     target_url_fragment = f"chrome-extension://{target_extension_id}"
     
     # 4. 查找插件页

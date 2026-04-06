@@ -24,18 +24,32 @@
 
         <!-- 内容生成页面主体 -->
         <main class="content-generator">
-            <!-- 功能按钮区 -->
+            <!-- 模式按钮区 -->
             <section class="content-functions">
                 <div class="function-buttons">
-                    <button class="btn function-btn" id="optimize-btn">
+                    <button class="btn function-btn" id="single-btn">
+                        <i class="fas fa-feather-alt"></i>
+                        <span>单篇创作</span>
+                    </button>
+                    <button class="btn function-btn" id="batch-btn">
+                        <i class="fas fa-layer-group"></i>
+                        <span>批量处理</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 批量处理子按钮（默认隐藏） -->
+            <section class="content-functions" id="batch-sub-section" style="display:none;">
+                <div class="function-buttons">
+                    <button class="btn function-btn batch-sub-btn" id="optimize-btn">
                         <i class="fas fa-pen-nib"></i>
                         <span>优化文案</span>
                     </button>
-                    <button class="btn function-btn" id="hook-btn">
+                    <button class="btn function-btn batch-sub-btn" id="hook-btn">
                         <i class="fas fa-play-circle"></i>
                         <span>生成钩子</span>
                     </button>
-                    <button class="btn function-btn" id="title-btn">
+                    <button class="btn function-btn batch-sub-btn" id="title-btn">
                         <i class="fas fa-heading"></i>
                         <span>生成标题</span>
                     </button>
@@ -47,13 +61,11 @@
                 <div class="description-card">
                     <h2><i class="fas fa-info-circle"></i> 内容生成功能说明</h2>
                     <div class="description-content">
-                        <p>选择以下功能之一开始生成您的内容：</p>
+                        <p>选择创作模式：</p>
                         <ul>
-                            <li><strong>优化文案</strong>：根据素材优化现有文案，提升吸引力和专业性</li>
-                            <li><strong>生成钩子</strong>：根据素材和钩子技巧生成吸引人的开头钩子</li>
-                            <li><strong>生成标题</strong>：根据素材和标题技巧生成吸引人的标题</li>
+                            <li><strong>单篇创作</strong>：一句话描述需求，向导式完成草稿→标题→钩子→封面→保存全流程</li>
+                            <li><strong>批量处理</strong>：基于 material.txt 素材，分步批量生成优化文案、钩子和标题</li>
                         </ul>
-                        <p>点击上方按钮进入相应功能页面，完成后可返回主页面继续其他操作。</p>
                     </div>
                 </div>
             </section>
@@ -61,30 +73,33 @@
     </div>
 
     <script>
-        // 页面加载完成事件
         window.addEventListener('DOMContentLoaded', () => {
             const backBtn = document.getElementById('back-btn');
-            const titleBtn = document.getElementById('title-btn');
-            const hookBtn = document.getElementById('hook-btn');
-            const optimizeBtn = document.getElementById('optimize-btn');
-            
-            // 返回首页按钮点击事件
+            const singleBtn = document.getElementById('single-btn');
+            const batchBtn = document.getElementById('batch-btn');
+            const batchSubSection = document.getElementById('batch-sub-section');
+
             backBtn.addEventListener('click', () => {
                 window.location.href = 'index.html';
             });
-            
-            // 优化文案按钮点击事件
-            optimizeBtn.addEventListener('click', () => {
+
+            singleBtn.addEventListener('click', () => {
+                window.location.href = 'subpages/single-post.html';
+            });
+
+            batchBtn.addEventListener('click', () => {
+                const isVisible = batchSubSection.style.display !== 'none';
+                batchSubSection.style.display = isVisible ? 'none' : 'flex';
+                batchBtn.classList.toggle('active', !isVisible);
+            });
+
+            document.getElementById('optimize-btn').addEventListener('click', () => {
                 window.location.href = 'subpages/content-subpage.html';
             });
-            
-            // 生成标题按钮点击事件
-            titleBtn.addEventListener('click', () => {
+            document.getElementById('title-btn').addEventListener('click', () => {
                 window.location.href = 'subpages/title-subpage.html';
             });
-            
-            // 生成钩子按钮点击事件
-            hookBtn.addEventListener('click', () => {
+            document.getElementById('hook-btn').addEventListener('click', () => {
                 window.location.href = 'subpages/hook-subpage.html';
             });
         });

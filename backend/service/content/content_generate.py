@@ -29,6 +29,7 @@ class ContentCreatorService:
         self.material_file = os.path.join(self.content_gen_dir, "material.txt")
         self.title_tips_file = os.path.join(self.content_gen_dir, "tip", "title.txt")
         self.hook_tips_file = os.path.join(self.content_gen_dir, "tip", "hook.txt")
+        self.content_tips_file = os.path.join(self.content_gen_dir, "tip", "content.txt")
     
     def read_file(self, file_path):
         """读取文件内容"""
@@ -182,6 +183,39 @@ class ContentCreatorService:
             print(f"优化文案失败: {str(e)}")
             return [material_content]
     
+    def generate_drafts_from_prompt(self, user_prompt):
+        """根据用户自由输入的提示词生成3-5条独立的小红书正文草稿"""
+        try:
+            content_tips = self.read_file(self.content_tips_file) or ""
+            prompt = f"""作为一名专业的小红书美业博主，请根据用户的创作需求，生成3到5条独立的小红书正文草稿。
+业务范围：美甲、精油推背、纹眉、面部轻医美（如水光针）。
+
+【用户需求】
+{user_prompt}
+
+【创作指引】
+{content_tips}
+
+请严格按照以下格式返回结果：
+- 必须是JSON格式
+- 必须返回一个纯字符串数组，数组名为"drafts"
+- 每条草稿是独立完整的正文（150-300字），不含标题和开头钩子
+- 每条草稿的切角、侧重点要有明显差异
+- 不要包含任何额外的说明
+- 示例格式：{{"drafts": ["正文草稿1", "正文草稿2", "正文草稿3"]}}
+"""
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
+            result = self._parse_json_response(response.text)
+            if isinstance(result, list):
+                return result
+            return result.get("drafts", [])
+        except Exception as e:
+            print(f"生成草稿失败: {str(e)}")
+            return []
+
     def create_content(self, material_content=None, title_tips=None, hook_tips=None, generate_type="both", model_name=None):
         """主函数：生成标题、钩子或优化文案
 

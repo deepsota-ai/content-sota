@@ -27,6 +27,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // 内容容器
     const materialCarousel = document.getElementById('material-carousel');
     const resultCarousel = document.getElementById('result-carousel');
+    const filterGrid = document.getElementById('filter-grid');
+    const organizeBtn = document.getElementById('organize-btn');
 
     // 内容数据
     let materials = [];
@@ -38,8 +40,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 生成按钮点击事件
     generateBtn.addEventListener('click', () => {
-        // 调用API生成优化文案
         generateContentFromAPI();
+    });
+
+    // 整理按钮点击事件
+    organizeBtn.addEventListener('click', () => {
+        organizeContent();
     });
 
     // 加载模型列表
@@ -141,6 +147,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
                     // 更新结果显示
                     renderResults();
+                    renderFilterModules();
+                    organizeBtn.disabled = false;
                 } else {
                     showError('result-carousel', data.error);
                 }
@@ -179,6 +187,65 @@ window.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
+    }
+
+    // 渲染筛选模块（desc 预填优化后的文案）
+    function renderFilterModules() {
+        filterGrid.innerHTML = '';
+        generatedContents.forEach((content, index) => {
+            const card = document.createElement('div');
+            card.className = 'filter-card';
+            const contentText = Array.isArray(content.content)
+                ? content.content.join('\n')
+                : (content.content || '');
+            card.innerHTML = `
+                <h3>素材 ${content.materialIndex} 筛选结果</h3>
+                <div class="filter-field">
+                    <label for="title-${index}">标题 (title)</label>
+                    <textarea id="title-${index}" placeholder="请输入标题（从生成标题页复制，或手动填写）" class="filter-textarea"></textarea>
+                </div>
+                <div class="filter-field">
+                    <label for="desc-${index}">优化文案/描述 (desc)</label>
+                    <textarea id="desc-${index}" class="filter-textarea">${contentText}</textarea>
+                </div>
+            `;
+            filterGrid.appendChild(card);
+
+            const titleInput = card.querySelector(`#title-${index}`);
+            const descInput  = card.querySelector(`#desc-${index}`);
+            titleInput.addEventListener('input', e => { materials[content.materialIndex - 1].filterTitle = e.target.value; });
+            descInput.addEventListener('input',  e => { materials[content.materialIndex - 1].filterDesc  = e.target.value; });
+            // 初始化 filterDesc 为预填的优化文案
+            materials[content.materialIndex - 1].filterDesc = contentText;
+        });
+    }
+
+    // 整理内容
+    function organizeContent() {
+        organizeBtn.disabled = true;
+        organizeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 整理中...';
+        const requestData = {
+            materials: materials.map(m => ({
+                title: m.filterTitle || '',
+                desc:  m.filterDesc  || '',
+                fullContent: m.fullContent
+            }))
+        };
+        fetch('/api/organize-content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) alert('整理成功！内容已保存到 data/publish 目录');
+                else alert(`整理失败：${data.error}`);
+            })
+            .catch(e => alert(`整理失败：${e.message}`))
+            .finally(() => {
+                organizeBtn.disabled = false;
+                organizeBtn.innerHTML = '<i class="fas fa-folder-plus"></i> 整理';
+            });
     }
 
     // 生成素材卡片

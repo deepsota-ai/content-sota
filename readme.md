@@ -75,6 +75,8 @@ cd ContentCreatorHelper
 pip install -r requirements.txt
 ```
 
+> DrissionPage 用于 Chrome 自动化发布，安装时会自动下载，无需额外配置。
+
 **2. 配置 Gemini API Key**
 
 在项目根目录创建 `.env` 文件：
@@ -119,22 +121,24 @@ python app.py
 
 默认插件 ID：`jejejajkcbhejfiocemmddgbkdlhhngm`
 
-如果你安装的版本 ID 不同，修改 `backend/service/publish/ibeike_extension.py` 第 9 行：
+### 第二步：在 `.env` 里配置路径和插件 ID
 
-```python
-target_extension_id = "你的插件ID"
+所有发布相关配置统一写在项目根目录的 `.env` 文件中：
+
+```
+# 自动发布配置
+CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
+CHROME_USER_DATA_DIR=D:\Users\ChromeAutomationProfile
+IBEIKE_EXTENSION_ID=jejejajkcbhejfiocemmddgbkdlhhngm
 ```
 
-### 第二步：配置 Chrome 路径
+| 变量 | 说明 |
+|------|------|
+| `CHROME_PATH` | Chrome 可执行文件路径，默认为标准安装路径 |
+| `CHROME_USER_DATA_DIR` | 自动化专用用户目录，与日常 Chrome 互不干扰，可自定义 |
+| `IBEIKE_EXTENSION_ID` | 爱贝壳插件 ID，在 `chrome://extensions` 开启开发者模式后可查看 |
 
-修改 `backend/service/publish/ibeike_extension.py` 第 7-8 行：
-
-```python
-chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"  # Chrome 安装路径
-user_data_dir = r"D:\Users\ChromeAutomationProfile"                      # 自动化专用用户目录（可自定义路径）
-```
-
-`user_data_dir` 是自动化专用的独立 Chrome 用户目录，与你日常使用的 Chrome 互不干扰。
+三个变量均有内置默认值，未填写时程序仍可运行（使用默认值）。
 
 ### 第三步：首次登录小红书
 

@@ -97,13 +97,26 @@ class PublishController:
                 'message': str(e)
             }
     
+    def _read_hashtags(self):
+        """读取 hashtag.txt，不存在或为空时返回空字符串"""
+        hashtag_file = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            '..', 'data', 'contentGeneration', 'tip', 'hashtag.txt'
+        )
+        try:
+            with open(hashtag_file, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                return content if content else ""
+        except Exception:
+            return ""
+
     def organize_content(self, materials):
         """
         整理内容，在data/publish/{date}目录下创建文件夹和文件
-        
+
         Args:
             materials: 包含标题和描述的素材列表
-            
+
         Returns:
             tuple: (成功标志, 数据/错误信息)
         """
@@ -148,9 +161,12 @@ class PublishController:
                     f.write(f'title: {title}\n')
                     f.write(f'desc: {desc}\n')
             
+            hashtags = self._read_hashtags()
             return True, {
                 'success': True,
-                'message': f'内容整理成功，已保存至 {date_str} 文件夹'
+                'message': f'内容整理成功，已保存至 {date_str} 文件夹',
+                'hashtags': hashtags,
+                'date': date_str
             }
         except Exception as e:
             return False, {

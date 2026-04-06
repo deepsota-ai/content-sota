@@ -4,6 +4,18 @@ class ContentController:
     def __init__(self):
         self.service = ContentCreatorService()
     
+    def generate_drafts(self, user_prompt, model_name=None):
+        """根据用户提示词生成3-5条完整正文草稿"""
+        try:
+            if model_name:
+                self.service.model_name = model_name
+            drafts = self.service.generate_drafts_from_prompt(user_prompt)
+            if drafts:
+                return True, {'success': True, 'data': {'drafts': drafts}}
+            return False, {'success': False, 'error': '生成草稿失败，返回为空'}
+        except Exception as e:
+            return False, {'success': False, 'error': str(e)}
+
     def generate_content(self, material_content=None, generate_type="both", model_name=None):
         """
         生成内容（标题和钩子）

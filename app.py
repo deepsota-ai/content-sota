@@ -135,6 +135,24 @@ def generate_content():
     }), 200
 
 
+# 读取 hashtag 配置
+@app.route('/api/hashtags', methods=['GET'])
+def get_hashtags():
+    from backend.controller.publish.publish_controller import PublishController
+    tags = PublishController()._read_hashtags()
+    return jsonify({'success': True, 'hashtags': tags}), 200
+
+# 单篇创作：从提示词生成草稿API接口
+@app.route('/api/generate-drafts', methods=['POST'])
+def generate_drafts():
+    user_prompt = request.json.get('user_prompt', '').strip()
+    model_name = request.json.get('model_name')
+    if not user_prompt:
+        return jsonify({'success': False, 'error': '未提供创作需求'}), 400
+    controller = ContentController()
+    success, data = controller.generate_drafts(user_prompt, model_name=model_name)
+    return jsonify(data), 200 if success else 400
+
 # 获取toPs图片列表API接口
 @app.route('/api/get_to_ps_images', methods=['GET'])
 def get_to_ps_images():
@@ -238,47 +256,57 @@ def save_edited_image():
         # 获取请求数据
         image_data = request.json.get('imageData')
         filename = request.json.get('filename')
-        date_param = request.json.get('date') # 获取日期参数
-        
+        date_param = request.json.get('date')           # 可选，日期字符串
+        folder_name = request.json.get('folder_name')   # 可选，直接指定素材文件夹名（如"素材_1"）
+
         if not image_data or not filename:
             return jsonify({'success': False, 'error': '缺少必要参数'}), 400
-        
+
         # 处理图片数据，移除base64前缀
         if image_data.startswith('data:image/png;base64,'):
             image_data = image_data.replace('data:image/png;base64,', '')
-        
+        elif image_data.startswith('data:image/jpeg;base64,'):
+            image_data = image_data.replace('data:image/jpeg;base64,', '')
+        elif ',' in image_data:
+            image_data = image_data.split(',', 1)[1]
+
         # 解码base64数据
         import base64
         image_bytes = base64.b64decode(image_data)
-        
-        # 确定保存目录：根据文件名映射到对应的素材文件夹
-        # 例如 filename="1.png" 或 "1.jpg" -> 保存到 data/publish/{date}/素材_1/
-        file_basename = os.path.splitext(filename)[0] # 获取序号，如 "1"
-        material_folder_name = f"素材_{file_basename}"
-        
+
         # 确定日期
         if date_param:
             date_str = date_param
         else:
-            # 默认当前日期 YYYY.M.D
             from datetime import datetime
             now = datetime.now()
             date_str = f"{now.year}.{now.month}.{now.day}"
-        
+
+        # 确定素材文件夹：优先使用 folder_name 参数，否则按 filename 映射
+        if folder_name:
+            material_folder_name = folder_name
+        else:
+            file_basename = os.path.splitext(filename)[0]
+            material_folder_name = f"素材_{file_basename}"
+
         publish_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'publish', date_str, material_folder_name)
         
         # 确保目标文件夹存在
         if not os.path.exists(publish_dir):
             os.makedirs(publish_dir)
             
-        # 统一保存为 1.jpg，因为发布系统通常寻找 1.jpg 作为封面
-        # 如果用户坚持要原名，我们可以保留 filename，但根据之前的 publish_controller，它寻找 1.jpg
-        target_filename = "1.jpg"
+        # 确定目标文件名：filename 参数若是纯数字（如 "1","2","3"），保存为 {n}.jpg；
+        # 否则使用原文件名（保持旧行为，封面页传入的 filename 通常为原图文件名）
+        file_basename = os.path.splitext(filename)[0]
+        if file_basename.isdigit():
+            target_filename = f"{file_basename}.jpg"
+        else:
+            target_filename = "1.jpg"
         image_path = os.path.join(publish_dir, target_filename)
-        
+
         with open(image_path, 'wb') as f:
             f.write(image_bytes)
-        
+
         return jsonify({'success': True, 'message': '图片保存成功', 'file_path': image_path}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

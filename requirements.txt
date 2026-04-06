@@ -1,6 +1,6 @@
 python-dotenv
-openai
 pillow
 flask
 flask-cors
 google-generativeai
+DrissionPage
