@@ -32,14 +32,37 @@ window.addEventListener('DOMContentLoaded', () => {
     let materials = [];
     let generatedContents = [];
 
-    // 页面加载时动态加载素材
+    // 页面加载时动态加载素材和模型列表
     loadMaterialsFromAPI();
+    loadModels();
 
     // 生成按钮点击事件
     generateBtn.addEventListener('click', () => {
         // 调用API生成优化文案
         generateContentFromAPI();
     });
+
+    // 加载模型列表
+    function loadModels() {
+        const modelSelect = document.getElementById('model-select');
+        if (!modelSelect) return;
+        fetch('/api/models')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const saved = localStorage.getItem('selectedModel');
+                    modelSelect.innerHTML = data.models.map(m =>
+                        `<option value="${m.id}" ${m.id === saved ? 'selected' : ''}>${m.name}</option>`
+                    ).join('');
+                }
+            })
+            .catch(() => {
+                modelSelect.innerHTML = '<option value="">获取模型失败</option>';
+            });
+        modelSelect.addEventListener('change', () => {
+            localStorage.setItem('selectedModel', modelSelect.value);
+        });
+    }
 
     // 从API加载素材函数
     function loadMaterialsFromAPI() {
@@ -85,11 +108,11 @@ window.addEventListener('DOMContentLoaded', () => {
         showLoading('result-carousel', '正在优化文案...');
 
         // 准备请求数据
+        const modelSelect = document.getElementById('model-select');
         const requestData = {
-            // 传递所有素材的完整内容数组
             material_contents: materials.map(m => m.fullContent),
-            // 生成类型：content（优化文案）
-            generate_type: "content"
+            generate_type: "content",
+            model_name: modelSelect ? modelSelect.value : null
         };
 
         // 调用实际的内容生成API

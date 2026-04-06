@@ -40,6 +40,42 @@ def load_material():
     else:
         return jsonify(data), 400
 
+# 可用模型列表API接口（从 Gemini API 动态获取）
+@app.route('/api/models', methods=['GET'])
+def get_models():
+    try:
+        import os
+        from dotenv import load_dotenv
+        from google import genai
+        load_dotenv()
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        # 拉取所有模型，过滤出支持 generateContent 的 gemini 模型
+        all_models = client.models.list()
+        models = []
+        seen = set()
+        for m in all_models:
+            name = m.name  # 格式如 "models/gemini-2.0-flash"
+            model_id = name.replace("models/", "")
+            if not model_id.startswith("gemini-"):
+                continue
+            if "generateContent" not in (m.supported_actions or []):
+                continue
+            if model_id in seen:
+                continue
+            seen.add(model_id)
+            models.append({"id": model_id, "name": model_id})
+        # 按名称排序，稳定显示
+        models.sort(key=lambda x: x["id"])
+        return jsonify({"success": True, "models": models}), 200
+    except Exception as e:
+        # 降级为静态列表
+        fallback = [
+            {"id": "gemini-2.5-flash-preview-05-20", "name": "Gemini 2.5 Flash"},
+            {"id": "gemini-2.0-flash",               "name": "Gemini 2.0 Flash"},
+            {"id": "gemini-1.5-flash",               "name": "Gemini 1.5 Flash"},
+        ]
+        return jsonify({"success": True, "models": fallback, "warning": str(e)}), 200
+
 # 生成内容API接口
 @app.route('/api/generate-content', methods=['POST'])
 def generate_content():
@@ -47,6 +83,7 @@ def generate_content():
     material_contents = request.json.get('material_contents', [])
     # 前端不再传递 title_tips 和 hook_tips，由后端自动读取
     generate_type = request.json.get('generate_type', 'both')  # 生成类型，默认生成标题和钩子
+    model_name = request.json.get('model_name')  # 可选，前端选择的模型
     
     # 如果是单个素材，兼容旧格式
     if not material_contents and request.json.get('material_content'):
@@ -69,8 +106,8 @@ def generate_content():
         print(f"处理素材 {i+1}")
         print(f"素材内容: {material_content[:50]}...")
         
-        # 调用 controller，不再传递 tips 参数
-        success, data = controller.generate_content(material_content, generate_type=generate_type)
+        # 调用 controller
+        success, data = controller.generate_content(material_content, generate_type=generate_type, model_name=model_name)
         if success:
             print(f"素材 {i+1} 生成成功")
             

@@ -56,7 +56,7 @@ class ContentCreatorService:
     def generate_title(self, material_content, title_tips):
         """根据素材和标题技巧生成标题"""
         try:
-            prompt = f"""作为一名专业的内容创作者，请根据以下素材和标题创作技巧，为程序员、技术、赚钱相关内容生成3-5个吸引人的标题：
+            prompt = f"""作为一名专业的小红书内容创作者，请根据以下素材和标题创作技巧，为一家提供美甲、精油推背、纹眉、面部轻医美（如水光针）服务的美业门店生成3-5个吸引人的小红书标题：
 
                     【素材内容】
                     {material_content}
@@ -66,10 +66,10 @@ class ContentCreatorService:
 
                     请确保生成的标题：
                     1. 符合提供的技巧
-                    2. 吸引人且有情绪痛点
-                    3. 与程序员、技术、赚钱内容相关
-                    4. 不要说教，要有价值
-                    5. 问题提问必须是反认知或痛点场景
+                    2. 有情绪共鸣、有痛点或有好奇心驱动
+                    3. 与素材对应的具体业务（美甲/精油推背/纹眉/轻医美）紧密相关
+                    4. 不要说教，要真实有温度，像女生闺蜜分享
+                    5. 适合小红书平台风格，可以带emoji
 
                     请严格按照以下格式返回结果：
                     - 必须是JSON格式
@@ -100,7 +100,7 @@ class ContentCreatorService:
     def generate_hook(self, material_content, hook_tips):
         """根据素材和钩子技巧生成钩子"""
         try:
-            prompt = f"""作为一名专业的内容创作者，请根据以下素材和钩子创作技巧，为程序员、技术、赚钱相关内容生成3-5个吸引人的开头钩子：
+            prompt = f"""作为一名专业的小红书内容创作者，请根据以下素材和钩子创作技巧，为一家提供美甲、精油推背、纹眉、面部轻医美（如水光针）服务的美业门店生成3-5个吸引人的开头钩子：
 
                         【素材内容】
                         {material_content}
@@ -110,9 +110,9 @@ class ContentCreatorService:
 
                         请确保生成的钩子：
                         1. 符合提供的技巧，但要尽量使用不同的技巧模板，避免重复使用相同结构
-                        2. 吸引人且有情绪痛点
-                        3. 与程序员、技术、赚钱内容相关
-                        4. 能够吸引观众继续观看
+                        2. 吸引人且戳中对应业务的痛点（如指甲问题、身体疲劳、眉毛焦虑、皮肤状态等）
+                        3. 与素材对应的具体业务（美甲/精油推背/纹眉/轻医美）紧密相关
+                        4. 能够让目标客群（爱美女生）忍不住继续看
                         5. 确保每个钩子的结构和表达方式都有明显差异，避免内容重合
 
                         请严格按照以下格式返回结果：
@@ -144,18 +144,19 @@ class ContentCreatorService:
     def generate_optimized_content(self, material_content):
         """优化文案内容，调用AI生成有情绪、有画面、有代入感的文案"""
         try:
-            prompt = f"""作为一名专业的内容创作者，请根据以下素材内容，生成相应的1条有情绪、有画面、有代入感的文案：
+            prompt = f"""作为一名专业的小红书美业博主，请根据以下素材内容，生成相应的1条有情绪、有画面、有代入感的美业服务种草文案（业务范围：美甲、精油推背、纹眉、面部轻医美如水光针）：
 
                     【素材内容】
                     {material_content}
 
                     【优化要求】
-                    1. 要有情绪：能够触发读者的情感共鸣
-                    2. 要有画面：通过生动的描述让读者仿佛身临其境
-                    3. 要有代入感：让读者感觉内容就是在说他们自己
-                    4. 不只是听懂，而是被击中、想行动：激发读者的行动欲望
-                    5. 避免说教感：不要使用生硬的命令或教导语气
+                    1. 要有情绪：触发目标客群（爱美女生）的情感共鸣（疲惫、变美渴望、治愈感等）
+                    2. 要有画面：让读者仿佛能感受到做完项目后的状态（放松、精致、自信）
+                    3. 要有代入感：让读者感觉"这说的就是我！"
+                    4. 被击中、想预约：激发读者想到店体验的欲望
+                    5. 避免说教感：用闺蜜分享的口吻，真实自然
                     6. 要口语化，字数不用太多，和原文案相近或多一点即可
+                    7. 适合小红书平台风格，可以适当加emoji
 
                     请严格按照以下格式返回结果：
                     - 必须是JSON格式
@@ -181,18 +182,23 @@ class ContentCreatorService:
             print(f"优化文案失败: {str(e)}")
             return [material_content]
     
-    def create_content(self, material_content=None, title_tips=None, hook_tips=None, generate_type="both"):
+    def create_content(self, material_content=None, title_tips=None, hook_tips=None, generate_type="both", model_name=None):
         """主函数：生成标题、钩子或优化文案
-        
+
         Args:
             material_content: 素材内容字符串或字符串数组
             title_tips: 标题技巧字符串
             hook_tips: 钩子技巧字符串
             generate_type: 生成类型，可选值："both"（生成标题和钩子）、"title"（只生成标题）、"hook"（只生成钩子）、"content"（优化文案）
-            
+            model_name: 可选，覆盖默认模型 ID
+
         Returns:
             包含titles、hooks和/或content的字典
         """
+        # 如果传入了 model_name，本次调用使用该模型
+        if model_name:
+            self.model_name = model_name
+
         # 如果没有传入参数，从文件读取
         if not material_content:
             material_content = self.read_file(self.material_file)

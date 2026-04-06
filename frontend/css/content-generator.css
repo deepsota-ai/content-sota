@@ -236,6 +236,39 @@
     line-height: 1.5;
 }
 
+/* 模型选择器 */
+.model-selector-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 6px 16px;
+}
+
+.model-selector-wrap label {
+    color: #aaa;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.model-select {
+    background: transparent;
+    border: none;
+    color: #e0e0e0;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    min-width: 200px;
+}
+
+.model-select option {
+    background: #2a2a3a;
+    color: #e0e0e0;
+}
+
 /* 操作区 */
 .action-section {
     text-align: center;
