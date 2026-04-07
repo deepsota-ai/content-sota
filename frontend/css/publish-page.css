@@ -169,3 +169,101 @@
     display: flex;
     align-items: center;
 }
+
+/* 内容预览编辑面板 */
+.content-edit-panel {
+    background: rgba(26, 26, 46, 0.85);
+    border: 1px solid rgba(74, 144, 226, 0.35);
+    border-radius: 14px;
+    padding: 24px;
+    margin: 20px 0;
+    backdrop-filter: blur(6px);
+}
+
+.content-edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.content-edit-header h3 {
+    color: #4a90e2;
+    font-size: 16px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.save-toast {
+    font-size: 13px;
+    color: #2ecc71;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.save-toast.show {
+    opacity: 1;
+}
+
+.content-edit-field {
+    margin-bottom: 16px;
+}
+
+.content-edit-field label {
+    display: block;
+    font-size: 12px;
+    color: #8090a0;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.content-edit-field input[type=text],
+.content-edit-field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(74, 144, 226, 0.06);
+    border: 1px solid rgba(74, 144, 226, 0.25);
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 14px;
+    line-height: 1.6;
+    box-sizing: border-box;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.content-edit-field input[type=text]:focus,
+.content-edit-field textarea:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.15);
+}
+
+.content-edit-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.btn-save-edit {
+    background: transparent;
+    border: 1px solid rgba(74, 144, 226, 0.5);
+    color: #4a90e2;
+    font-size: 14px;
+    padding: 9px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.btn-save-edit:hover {
+    background: rgba(74, 144, 226, 0.12);
+    border-color: #4a90e2;
+}

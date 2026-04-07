@@ -201,39 +201,40 @@ class PublishController:
                     'message': f'文件夹 {folder_name} 中缺少 1.txt 文件'
                 }
             
-            # 检查是否有视频文件
+            # 判断发布类型：有 .MOV 文件 → 视频，否则 → 图文
             has_video = False
             for file in os.listdir(folder_path):
-                if file.endswith('.MOV') or file.endswith('.mov'):
+                if file.lower().endswith('.mov'):
                     has_video = True
                     break
-            
-            if not has_video:
-                return False, {
-                    'success': False,
-                    'message': f'文件夹 {folder_name} 中缺少视频文件'
-                }
-            
-            # 检查是否有封面文件
-            cover_file = os.path.join(folder_path, '1.jpg')
-            if not os.path.exists(cover_file):
-                return False, {
-                    'success': False,
-                    'message': f'文件夹 {folder_name} 中缺少 1.jpg 封面文件'
-                }
-            
+            publish_mode = 'video' if has_video else 'image'
+
+            # 图文模式要求至少有 1.jpg
+            if publish_mode == 'image':
+                cover_file = os.path.join(folder_path, '1.jpg')
+                if not os.path.exists(cover_file):
+                    return False, {
+                        'success': False,
+                        'message': f'文件夹 {folder_name} 中缺少 1.jpg 图片文件'
+                    }
+            else:
+                # 视频模式仍检查封面
+                cover_file = os.path.join(folder_path, '1.jpg')
+                if not os.path.exists(cover_file):
+                    return False, {
+                        'success': False,
+                        'message': f'文件夹 {folder_name} 中缺少 1.jpg 封面文件'
+                    }
+
             # 启动Chrome并打开扩展页面
-            print(f"🚀 开始发布文件夹：{folder_name}")
-            
-            # 启动Chrome并打开扩展页面
+            print(f"🚀 开始发布文件夹：{folder_name}（{publish_mode}模式）")
+
             start_chrome_with_extension()
-            
-            # 等待Chrome启动完成
+
             import time
             time.sleep(3)
-            
-            # 连接到扩展页面并执行发布操作
-            success = connect_to_extension(folder_name)
+
+            success = connect_to_extension(folder_name, mode=publish_mode)
             
             if success:
                 return True, {
@@ -250,3 +251,41 @@ class PublishController:
                 'success': False,
                 'message': str(e)
             }
+
+    def get_content(self, folder_name):
+        """读取素材的标题和正文"""
+        try:
+            content_file = os.path.join(self.base_path, folder_name, '1.txt')
+            if not os.path.exists(content_file):
+                return False, {'success': False, 'message': '未找到 1.txt 文件'}
+            with open(content_file, 'r', encoding='utf-8') as f:
+                lines = f.read().splitlines()
+            title = ''
+            desc_lines = []
+            in_desc = False
+            for line in lines:
+                if line.startswith('title:') and not in_desc:
+                    title = line[len('title:'):].strip()
+                elif line.startswith('desc:'):
+                    desc_lines.append(line[len('desc:'):].strip())
+                    in_desc = True
+                elif in_desc:
+                    desc_lines.append(line)
+            desc = '\n'.join(desc_lines)
+            return True, {'success': True, 'title': title, 'desc': desc}
+        except Exception as e:
+            return False, {'success': False, 'message': str(e)}
+
+    def update_content(self, folder_name, title, desc):
+        """覆盖写入素材的标题和正文"""
+        try:
+            folder_path = os.path.join(self.base_path, folder_name)
+            if not os.path.exists(folder_path):
+                return False, {'success': False, 'message': f'文件夹 {folder_name} 不存在'}
+            content_file = os.path.join(folder_path, '1.txt')
+            with open(content_file, 'w', encoding='utf-8') as f:
+                f.write(f'title: {title}\n')
+                f.write(f'desc: {desc}\n')
+            return True, {'success': True}
+        except Exception as e:
+            return False, {'success': False, 'message': str(e)}

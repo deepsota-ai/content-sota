@@ -341,18 +341,37 @@ window.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 if (data.success) {
-                    alert('整理成功！内容已保存到data/publish目录');
+                    organizeBtn.innerHTML = '<i class="fas fa-check"></i> 已整理';
+                    showNextStepHint('publish');
                 } else {
                     alert(`整理失败：${data.error}`);
+                    organizeBtn.disabled = false;
+                    organizeBtn.innerHTML = '<i class="fas fa-folder-plus"></i> 整理';
                 }
             })
             .catch(error => {
                 alert(`整理失败：${error.message}`);
-            })
-            .finally(() => {
-                // 恢复按钮状态
                 organizeBtn.disabled = false;
                 organizeBtn.innerHTML = '<i class="fas fa-folder-plus"></i> 整理';
             });
+    }
+
+    function showNextStepHint(next) {
+        const existing = document.getElementById('next-step-hint');
+        if (existing) return;
+        const map = {
+            hook: { label: '→ 继续生成钩子', href: 'hook-subpage.html' },
+            title: { label: '→ 继续生成标题', href: 'title-subpage.html' },
+            publish: { label: '→ 前往发布管理', href: '../../html/publish-page.html' },
+        };
+        const item = map[next];
+        if (!item) return;
+        const btn = document.createElement('button');
+        btn.id = 'next-step-hint';
+        btn.className = 'btn generate-btn';
+        btn.style.cssText = 'margin-top:16px;background:linear-gradient(135deg,#2ecc71,#27ae60);';
+        btn.innerHTML = `<i class="fas fa-arrow-right"></i> ${item.label}`;
+        btn.addEventListener('click', () => { window.location.href = item.href; });
+        organizeBtn.parentElement.appendChild(btn);
     }
 });

@@ -1,107 +1,123 @@
 # 美业门店小红书内容助手
 
-一个面向美业门店（美甲/精油推背/纹眉/轻医美）的小红书内容自动化工具，帮助快速生成标题、钩子文案、制作封面并发布到小红书。
+[![CI](https://github.com/deepsota-ai/content-sota/actions/workflows/ci.yml/badge.svg)](https://github.com/deepsota-ai/content-sota/actions/workflows/ci.yml)
+
+一个面向美业门店（美甲 / 精油推背 / 纹眉 / 面部轻医美）的小红书内容自动化工具，帮助快速生成标题、钩子文案、制作封面并发布到小红书。
+
+---
 
 ## 功能概述
 
-1. **AI 内容生成** — 根据门店素材自动生成小红书爆款标题和钩子
-2. **文案优化** — 将原始素材改写为有情绪、有画面感的种草文案
-3. **封面生成** — 自动添加蒙版、Canvas 文字编辑、裁剪为小红书比例
-4. **发布完善** — 搭配爱贝壳插件完成视频+封面+文案一键填充发布
+| 模块 | 说明 |
+|------|------|
+| **单篇创作向导** | 一句话描述需求 → 向导式生成草稿 → 选标题 → 选钩子 → 封面编辑 → 配图 → 保存 |
+| **批量处理** | 基于 `material.txt` 素材文件，分步批量生成优化文案、钩子和标题，整理后引导到下一步 |
+| **封面生成** | 蒙版叠加、Canvas 文字编辑（字号/颜色/位置）、裁剪比例（1:1 / 3:4 / 4:3） |
+| **发布管理** | 预览并微调每条素材的标题/正文，一键发布（图文 & 视频），搭配爱贝壳插件自动填充 |
+
+---
 
 ## 技术栈
 
-- **后端**：Python + Flask、Google Gemini API（AI 内容生成）、Pillow（图像处理）、DrissionPage（Chrome 自动化）
-- **前端**：HTML5 + CSS3 + JavaScript、Canvas API（封面编辑）
+- **后端**：Python + Flask、Google Gemini API、Pillow、DrissionPage
+- **前端**：HTML5 + CSS3 + Vanilla JS、Canvas API
+- **测试**：pytest + pytest-cov
+- **CI**：GitHub Actions（Python 3.10 / 3.11 / 3.12）
+
+---
 
 ## 项目结构
 
 ```
 ContentCreatorHelper/
-├── app.py                        # Flask 应用入口（端口 5001）
-├── .env                          # 环境变量（不提交到 Git）
+├── app.py                          # Flask 入口（端口 5001）
+├── .env                            # 环境变量（不提交 Git）
 ├── requirements.txt
+├── .github/workflows/ci.yml        # GitHub Actions CI
+├── tests/                          # 单元测试
+│   ├── test_publish_controller.py
+│   ├── test_content_generate.py
+│   └── test_app_routes.py
 ├── backend/
-│   ├── controller/               # API 路由控制层
+│   ├── controller/
 │   │   ├── content/
 │   │   ├── cover/
 │   │   ├── publish/
 │   │   ├── load/
 │   │   └── clean/
-│   └── service/                  # 业务逻辑层
+│   └── service/
 │       ├── content/content_generate.py   # Gemini AI 生成
-│       ├── cover/                         # 蒙版、裁剪、文字
-│       └── publish/ibeike_extension.py    # Chrome 自动化发布
+│       ├── cover/                         # 蒙版、裁剪
+│       └── publish/ibeike_extension.py    # Chrome 自动化
 ├── frontend/
 │   ├── html/
 │   │   ├── index.html
-│   │   └── subpages/             # 各功能子页面
+│   │   ├── content-generator.html         # 单篇/批量入口
+│   │   ├── publish-page.html
+│   │   └── subpages/
+│   │       ├── single-post.html           # 单篇创作向导（6步）
+│   │       ├── title-subpage.html
+│   │       ├── hook-subpage.html
+│   │       └── content-subpage.html
 │   ├── js/
-│   ├── css/
-│   └── fonts/
+│   └── css/
 └── data/
     ├── contentGeneration/
-    │   ├── material.txt          # 门店素材（用 # 分隔各素材块）
+    │   ├── material.txt                   # 门店素材（# 分隔）
     │   └── tip/
-    │       ├── title.txt         # 标题创作技巧
-    │       └── hook.txt          # 钩子创作技巧
+    │       ├── title.txt                  # 标题创作技巧
+    │       ├── hook.txt                   # 钩子创作技巧
+    │       ├── content.txt                # 正文草稿指引
+    │       ├── hashtag.txt                # 固定标签（发布时自动追加）
+    │       └── emoji.txt                  # 小红书专属 emoji 列表
     ├── coverGeneration/
-    │   ├── toPs/                 # 放入原始图片
-    │   ├── cover/mask/           # 加蒙版后输出
-    │   └── cover/crop/           # 裁剪后输出
+    │   ├── toPs/                          # 放入原始图片
+    │   ├── cover/mask/                    # 加蒙版后输出
+    │   └── cover/crop/                    # 裁剪后输出
     └── publish/
-        └── {YYYY.M.D}/           # 按日期组织的发布素材
+        └── {YYYY.M.D}/
             └── 素材_{n}/
-                ├── 1.txt         # title: xxx\ndesc: xxx
-                ├── 1.jpg         # 封面图
-                └── video.MOV     # 视频文件
+                ├── 1.txt                  # title: xxx\ndesc: xxx
+                ├── 1.jpg                  # 封面（图文 / 视频封面）
+                ├── 2.jpg, 3.jpg…          # 配图（图文帖可选）
+                └── video.MOV              # 视频文件（视频帖可选）
 ```
 
-## 环境配置
+---
+
+## 快速开始
 
 ### 前置要求
 
-- Python 3.8+
-- Google Chrome（用于自动化发布）
-- 爱贝壳 Chrome 插件（用于小红书发布）
+- Python 3.10+
+- Google Chrome（自动发布功能需要）
+- 爱贝壳 Chrome 插件（小红书发布自动化需要）
 
-### 安装步骤
-
-**1. 克隆项目并安装依赖**
+### 安装
 
 ```bash
-git clone <repository-url>
-cd ContentCreatorHelper
+git clone git@github.com:deepsota-ai/content-sota.git
+cd content-sota
 pip install -r requirements.txt
 ```
 
-> DrissionPage 用于 Chrome 自动化发布，安装时会自动下载，无需额外配置。
+### 配置环境变量
 
-**2. 配置 Gemini API Key**
+在项目根目录创建 `.env`：
 
-在项目根目录创建 `.env` 文件：
-
-```
+```env
+# 必填
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# 自动发布（可选，有默认值）
+CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
+CHROME_USER_DATA_DIR=D:\Users\ChromeAutomationProfile
+IBEIKE_EXTENSION_ID=jejejajkcbhejfiocemmddgbkdlhhngm
 ```
 
-获取 API Key：访问 [Google AI Studio](https://aistudio.google.com)，免费注册后在「Get API key」处创建。
+获取 Gemini API Key：[Google AI Studio](https://aistudio.google.com) → Get API key（免费）
 
-**3. 准备素材文件**
-
-编辑 `data/contentGeneration/material.txt`，用 `#` 开头的行作为每块素材的标题分隔：
-
-```
-# 美甲-奶油色推荐
-
-这里写关于这款美甲的卖点、顾客反馈、使用场景等...
-
-# 精油推背-肩颈放松
-
-这里写关于精油推背项目的介绍、效果、适合人群...
-```
-
-**4. 启动服务**
+### 启动
 
 ```bash
 python app.py
@@ -111,86 +127,76 @@ python app.py
 
 ---
 
-## 自动发布配置
+## 使用流程
 
-发布功能通过 **爱贝壳 Chrome 插件 + DrissionPage** 实现自动化，需要以下配置。
+### 单篇创作（推荐）
 
-### 第一步：安装爱贝壳插件
+1. 内容生成 → **单篇创作**
+2. 输入一句话需求（如"为新款卡其色美甲写一篇文案"）→ 生成草稿
+3. 点击草稿 → 自动生成标题和钩子选项，点选确认
+4. 上传封面图 → 可裁剪比例、叠蒙版、添加文字 → 保存
+5. 上传配图（可选）→ 保存发布目录
 
-在 Chrome 应用商店搜索并安装「爱贝壳」发布插件，安装后记录插件 ID（在 `chrome://extensions` 页面开启开发者模式后可见）。
+### 批量处理
 
-默认插件 ID：`jejejajkcbhejfiocemmddgbkdlhhngm`
+1. 编辑 `data/contentGeneration/material.txt`（`#` 开头分隔每块素材）
+2. 内容生成 → **批量处理** → 依次执行：优化文案 → 钩子 → 标题
+3. 每步整理完成后，自动出现「→ 下一步」引导按钮
+4. 前往发布管理完成发布
 
-### 第二步：在 `.env` 里配置路径和插件 ID
+### 发布管理
 
-所有发布相关配置统一写在项目根目录的 `.env` 文件中：
-
-```
-# 自动发布配置
-CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
-CHROME_USER_DATA_DIR=D:\Users\ChromeAutomationProfile
-IBEIKE_EXTENSION_ID=jejejajkcbhejfiocemmddgbkdlhhngm
-```
-
-| 变量 | 说明 |
-|------|------|
-| `CHROME_PATH` | Chrome 可执行文件路径，默认为标准安装路径 |
-| `CHROME_USER_DATA_DIR` | 自动化专用用户目录，与日常 Chrome 互不干扰，可自定义 |
-| `IBEIKE_EXTENSION_ID` | 爱贝壳插件 ID，在 `chrome://extensions` 开启开发者模式后可查看 |
-
-三个变量均有内置默认值，未填写时程序仍可运行（使用默认值）。
-
-### 第三步：首次登录小红书
-
-第一次使用时需要手动登录，之后自动记住登录态：
-
-1. 在发布页面点击「启动 Chrome」按钮
-2. 在自动打开的 Chrome 窗口中手动登录小红书创作者后台（creator.xiaohongshu.com）
-3. 登录成功后关闭窗口，之后每次发布会自动使用此账号
-
-### 发布素材格式
-
-每次发布前，需在 `data/publish/{日期}/素材_{n}/` 目录下准备：
-
-| 文件 | 说明 |
-|------|------|
-| `1.txt` | 内容文案，格式见下方 |
-| `1.jpg` | 封面图（由封面生成功能自动保存） |
-| `video.MOV` | 视频文件（支持 `.MOV` / `.mov`） |
-
-`1.txt` 格式：
-
-```
-title: 你的小红书标题
-desc: 正文内容，支持换行和 emoji
-```
+1. 进入发布管理，选择日期 → 选择素材文件夹
+2. **预览编辑**：右侧面板预览标题和正文，可直接修改并保存（覆盖 `1.txt`）
+3. 点击**发布**（图文或视频自动识别）或**小红书完善**（见下方说明）
 
 ---
 
-## 使用流程
+## 自动发布配置
+
+发布功能通过 **爱贝壳 Chrome 插件 + DrissionPage** 实现，需以下准备：
+
+### 发布类型自动识别
+
+| 素材文件夹内容 | 识别结果 |
+|--------------|--------|
+| 含 `.MOV` / `.mov` | 视频帖发布模式 |
+| 仅含图片（`.jpg`）| 图文帖发布模式 |
+
+两种模式均需要 `1.txt`（标题 + 正文）和 `1.jpg`（封面 / 首图）。
+
+### 配置爱贝壳插件
+
+1. 在 Chrome 应用商店安装「爱贝壳」发布插件
+2. 前往 `chrome://extensions`，开启开发者模式，记录插件 ID
+3. 在 `.env` 中填写 `IBEIKE_EXTENSION_ID`（默认值：`jejejajkcbhejfiocemmddgbkdlhhngm`）
+
+### 首次登录小红书
 
 ```
-准备素材 → 内容生成 → 封面制作 → 发布
+1. 点击发布页「发布」按钮，工具会自动以专用用户目录启动 Chrome
+2. 在弹出的 Chrome 中手动登录 creator.xiaohongshu.com
+3. 后续发布自动复用登录状态，无需重新登录
 ```
 
-### 内容生成
+### 小红书完善功能
 
-1. 编辑 `data/contentGeneration/material.txt` 填入门店素材
-2. 打开内容生成页，选择 Gemini 模型（支持实时拉取最新模型列表）
-3. 点击「生成标题」或「生成钩子」，AI 自动批量处理每块素材
-4. 在筛选区挑选满意的标题和文案，点击「整理」保存到发布目录
+「小红书完善」用于在小红书草稿页面自动上传封面图，使用前需满足：
+- Chrome 已在 9223 端口运行（由工具自动启动）
+- 小红书创作者中心页面已打开且处于发布编辑状态
 
-### 封面生成
+---
 
-1. 将原始图片放入 `data/coverGeneration/toPs/`
-2. **蒙版**：点击生成半透明遮罩，让文字更清晰
-3. **文字编辑**：双击画布添加文字，支持自定义字体/大小/颜色/描边，批量保存
-4. **裁剪**：自动裁剪为 3:4（竖版）和 3:2（横版）两种比例
+## 内容配置文件
 
-### 发布
-
-1. 确认发布目录中有 `1.txt`、`1.jpg`、视频文件
-2. 点击「发布」，工具自动填充标题、描述、封面，等待确认后提交
+| 文件 | 说明 | 可自定义 |
+|------|------|---------|
+| `data/contentGeneration/material.txt` | 门店素材，`#` 开头行为分隔符 | ✅ |
+| `data/contentGeneration/tip/title.txt` | 标题创作技巧（供 AI 参考） | ✅ |
+| `data/contentGeneration/tip/hook.txt` | 钩子创作技巧（供 AI 参考） | ✅ |
+| `data/contentGeneration/tip/content.txt` | 正文草稿生成指引 | ✅ |
+| `data/contentGeneration/tip/hashtag.txt` | 固定标签，发布时自动追加到正文末尾 | ✅ |
+| `data/contentGeneration/tip/emoji.txt` | 小红书专属 `[XXX]` 格式 emoji 列表，AI 生成时优先使用 | ✅ |
 
 ---
 
@@ -198,18 +204,37 @@ desc: 正文内容，支持换行和 emoji
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/models` | 从 Gemini API 获取可用模型列表 |
+| GET | `/api/models` | 获取可用 Gemini 模型列表 |
+| GET | `/api/hashtags` | 读取 hashtag.txt 内容 |
 | GET | `/api/load-material` | 加载并分块素材文件 |
-| POST | `/api/generate-content` | 生成标题 / 钩子 / 优化文案 |
-| GET | `/api/get_to_ps_images` | 获取待处理图片列表 |
+| POST | `/api/generate-drafts` | 根据一句话需求生成正文草稿 |
+| POST | `/api/generate-content` | 批量生成标题 / 钩子 / 优化文案 |
 | POST | `/api/generate-mask-cover` | 添加蒙版 |
 | POST | `/api/generate-cropped-image` | 裁剪图片 |
 | POST | `/api/save-edited-image` | 保存 Canvas 编辑后的图片 |
-| GET | `/api/publish/folders` | 获取发布文件夹列表 |
 | POST | `/api/organize-content` | 整理内容到发布目录 |
-| POST | `/api/publish/<folder>` | 执行自动发布 |
+| GET/POST | `/api/publish/content` | 读取 / 更新素材 1.txt |
+| GET | `/api/publish/folders` | 获取发布文件夹列表 |
+| POST | `/api/publish/<folder>` | 执行自动发布（图文或视频） |
 | POST | `/api/publish/xhs_perfect/<folder>` | 小红书封面自动完善 |
 | POST | `/api/clean-data` | 清理生成目录 |
+
+---
+
+## 开发 & 测试
+
+```bash
+# 运行全部测试
+pytest tests/ -v
+
+# 带覆盖率报告
+pytest tests/ --cov=backend --cov-report=term-missing
+```
+
+测试覆盖：
+- `PublishController`：读取/更新内容、发布模式判断（图文/视频自动识别）
+- `ContentCreatorService`：JSON 解析、emoji 加载、API mock、草稿生成
+- Flask 路由：hashtags、publish/content、generate-drafts、models
 
 ---
 

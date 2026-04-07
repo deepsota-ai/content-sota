@@ -4,3 +4,7 @@ flask
 flask-cors
 google-generativeai
 DrissionPage
+
+# Dev / testing
+pytest
+pytest-cov

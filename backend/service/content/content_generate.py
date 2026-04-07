@@ -30,6 +30,16 @@ class ContentCreatorService:
         self.title_tips_file = os.path.join(self.content_gen_dir, "tip", "title.txt")
         self.hook_tips_file = os.path.join(self.content_gen_dir, "tip", "hook.txt")
         self.content_tips_file = os.path.join(self.content_gen_dir, "tip", "content.txt")
+        self.emoji_tips_file = os.path.join(self.content_gen_dir, "tip", "emoji.txt")
+        self._emoji_list = self._load_emoji_list()
+
+    def _load_emoji_list(self):
+        """加载小红书专属emoji列表，提取所有 [XXX] 格式的码"""
+        try:
+            content = self.read_file(self.emoji_tips_file) or ''
+            return ' '.join(re.findall(r'\[[^\]]+\]', content))
+        except Exception:
+            return ''
     
     def read_file(self, file_path):
         """读取文件内容"""
@@ -70,7 +80,7 @@ class ContentCreatorService:
                     2. 有情绪共鸣、有痛点或有好奇心驱动
                     3. 与素材对应的具体业务（美甲/精油推背/纹眉/轻医美）紧密相关
                     4. 不要说教，要真实有温度，像女生闺蜜分享
-                    5. 适合小红书平台风格，可以带emoji
+                    5. 适合小红书平台风格，可以使用小红书专属emoji（如 {self._emoji_list}），禁止使用Unicode字符表情
 
                     请严格按照以下格式返回结果：
                     - 必须是JSON格式
@@ -157,7 +167,7 @@ class ContentCreatorService:
                     4. 被击中、想预约：激发读者想到店体验的欲望
                     5. 避免说教感：用闺蜜分享的口吻，真实自然
                     6. 要口语化，字数不用太多，和原文案相近或多一点即可
-                    7. 适合小红书平台风格，可以适当加emoji
+                    7. 适合小红书平台风格，可以适当使用小红书专属emoji（如 {self._emoji_list}），禁止使用Unicode字符表情
 
                     请严格按照以下格式返回结果：
                     - 必须是JSON格式
@@ -201,6 +211,7 @@ class ContentCreatorService:
 - 必须返回一个纯字符串数组，数组名为"drafts"
 - 每条草稿是独立完整的正文（150-300字），不含标题和开头钩子
 - 每条草稿的切角、侧重点要有明显差异
+- 可以适当使用小红书专属emoji（如 {self._emoji_list}），禁止使用Unicode字符表情
 - 不要包含任何额外的说明
 - 示例格式：{{"drafts": ["正文草稿1", "正文草稿2", "正文草稿3"]}}
 """

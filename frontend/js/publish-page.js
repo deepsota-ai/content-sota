@@ -2,15 +2,20 @@
 document.addEventListener('DOMContentLoaded', function () {
     // 获取页面元素
     const folderList = document.getElementById('folder-list');
-    const publishBtn = document.getElementById('publish-btn');
     const statusMessage = document.getElementById('status-message');
-    // const infoMessage = document.getElementById('info-message'); // Unused
     const backBtn = document.getElementById('back-btn');
+    const contentEditPanel = document.getElementById('content-edit-panel');
+    const editTitle = document.getElementById('edit-title');
+    const editDesc = document.getElementById('edit-desc');
+    const saveEditBtn = document.getElementById('save-edit-btn');
+    const saveToast = document.getElementById('save-toast');
 
     // 当前状态
     let currentLevel = 'root'; // 'root' (日期列表) 或 'date' (素材列表)
     let currentDateFolder = null; // 当前选中的日期文件夹名
     let selectedFolder = null;
+    let originalTitle = '';
+    let originalDesc = '';
 
     // 返回首页按钮点击事件 - 初始绑定
     backBtn.addEventListener('click', function () {
@@ -97,10 +102,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderFolderList(folders, isDateLevel) {
         folderList.innerHTML = '';
 
-        // 每次渲染列表，先清空选中状态
+        // 每次渲染列表，先清空选中状态和编辑面板
         selectedFolder = null;
-        publishBtn.disabled = true;
+        contentEditPanel.style.display = 'none';
+        const publishBtn = document.getElementById('publish-btn');
         const xhsPerfectBtn = document.getElementById('xhs-perfect-btn');
+        if (publishBtn) publishBtn.disabled = true;
         if (xhsPerfectBtn) xhsPerfectBtn.disabled = true;
 
         if (folders.length === 0) {
@@ -163,12 +170,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     this.classList.add('selected');
 
                     // 构造完整的发布路径：日期/素材名
-                    // 后端 publish 接口将接收这个路径
                     selectedFolder = `${currentDateFolder}/${this.dataset.folderName}`;
 
-                    // 启用发布按钮
-                    publishBtn.disabled = false;
-                    if (xhsPerfectBtn) xhsPerfectBtn.disabled = false;
+                    // 加载内容到编辑面板
+                    loadContentPanel(selectedFolder);
 
                     showStatus('info', `已选择：${selectedFolder}`);
                 }
@@ -178,66 +183,94 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 发布按钮点击事件
-    publishBtn.addEventListener('click', async function () {
-        if (!selectedFolder) {
-            showStatus('error', '请先选择要发布的文件夹');
-            return;
-        }
-
+    // ── 内容预览编辑面板 ────────────────────────────────────────────
+    async function loadContentPanel(folderPath) {
+        contentEditPanel.style.display = 'block';
+        editTitle.value = '加载中…';
+        editDesc.value = '';
+        const publishBtn = document.getElementById('publish-btn');
         const xhsPerfectBtn = document.getElementById('xhs-perfect-btn');
-        showStatus('info', `<div class="loading-text"><div class="loading"></div>正在发布内容...</div>`);
-        publishBtn.disabled = true;
+        if (publishBtn) publishBtn.disabled = true;
         if (xhsPerfectBtn) xhsPerfectBtn.disabled = true;
-
         try {
-            // 使用 encodeURIComponent 编码路径
-            // 后端 app.py 需要配置 <path:folder_name> 来正确接收包含斜杠的路径
-            const response = await fetch(`/api/publish/${encodeURIComponent(selectedFolder)}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const data = await response.json();
-
+            const res = await fetch(`/api/publish/content?path=${encodeURIComponent(folderPath)}`);
+            const data = await res.json();
             if (data.success) {
-                showStatus('success', `发布成功：${data.message}`);
+                editTitle.value = data.title || '';
+                editDesc.value = data.desc || '';
+                originalTitle = editTitle.value;
+                originalDesc = editDesc.value;
+                if (publishBtn) publishBtn.disabled = false;
+                if (xhsPerfectBtn) xhsPerfectBtn.disabled = false;
             } else {
-                showStatus('error', `发布失败：${data.message}`);
+                editTitle.value = '';
+                editDesc.value = '（未找到 1.txt，请先完成内容整理）';
             }
-        } catch (error) {
-            showStatus('error', `发布失败：${error.message}`);
-        } finally {
-            publishBtn.disabled = false;
-            if (xhsPerfectBtn) xhsPerfectBtn.disabled = false;
+        } catch (e) {
+            editTitle.value = '';
+            editDesc.value = `加载失败：${e.message}`;
+        }
+    }
+
+    saveEditBtn.addEventListener('click', async function () {
+        if (!selectedFolder) return;
+        const title = editTitle.value.trim();
+        const desc = editDesc.value;
+        try {
+            const res = await fetch('/api/publish/content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: selectedFolder, title, desc }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                originalTitle = title;
+                originalDesc = desc;
+                saveToast.classList.add('show');
+                setTimeout(() => saveToast.classList.remove('show'), 2000);
+            } else {
+                showStatus('error', `保存失败：${data.message}`);
+            }
+        } catch (e) {
+            showStatus('error', `保存失败：${e.message}`);
         }
     });
 
-    // 小红书完善按钮点击事件
-    const xhsPerfectBtn = document.getElementById('xhs-perfect-btn');
-    if (xhsPerfectBtn) {
-        xhsPerfectBtn.addEventListener('click', async function () {
-            if (!selectedFolder) {
-                showStatus('error', '请先选择要发布的文件夹');
-                return;
-            }
+    // 发布按钮（事件委托，按钮在面板内）
+    document.addEventListener('click', async function (e) {
+        const publishBtn = e.target.closest('#publish-btn');
+        const xhsPerfectBtn = e.target.closest('#xhs-perfect-btn');
 
-            showStatus('info', `<div class="loading-text"><div class="loading"></div>正在完善小红书封面...</div>`);
+        if (publishBtn && !publishBtn.disabled) {
+            if (!selectedFolder) { showStatus('error', '请先选择要发布的文件夹'); return; }
+            showStatus('info', `<div class="loading-text"><div class="loading"></div>正在发布内容...</div>`);
             publishBtn.disabled = true;
-            xhsPerfectBtn.disabled = true;
+            try {
+                const response = await fetch(`/api/publish/${encodeURIComponent(selectedFolder)}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showStatus('success', `发布成功：${data.message}`);
+                } else {
+                    showStatus('error', `发布失败：${data.message}`);
+                }
+            } catch (error) {
+                showStatus('error', `发布失败：${error.message}`);
+            } finally {
+                publishBtn.disabled = false;
+            }
+        }
 
+        if (xhsPerfectBtn && !xhsPerfectBtn.disabled) {
+            if (!selectedFolder) { showStatus('error', '请先选择要发布的文件夹'); return; }
+            showStatus('info', `<div class="loading-text"><div class="loading"></div>正在完善小红书封面...</div>`);
+            xhsPerfectBtn.disabled = true;
             try {
                 const response = await fetch(`/api/publish/xhs_perfect/${encodeURIComponent(selectedFolder)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }
                 });
-
                 const data = await response.json();
-
                 if (data.success) {
                     showStatus('success', `小红书封面指令：${data.message}`);
                 } else {
@@ -246,11 +279,10 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (error) {
                 showStatus('error', `网络错误：${error.message}`);
             } finally {
-                publishBtn.disabled = false;
                 xhsPerfectBtn.disabled = false;
             }
-        });
-    }
+        }
+    });
 
     // 显示状态消息
     function showStatus(type, message) {

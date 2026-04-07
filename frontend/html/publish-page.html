@@ -41,15 +41,33 @@
                 <!-- 文件夹列表将通过JavaScript动态生成 -->
             </div>
 
-            <div class="action-buttons">
-                <button class="btn btn-primary" id="publish-btn" disabled>
-                    <i class="fas fa-paper-plane"></i>
-                    发布
-                </button>
-                <button class="btn btn-secondary" id="xhs-perfect-btn" disabled>
-                    <i class="fab fa-xhs"></i>
-                    小红书完善
-                </button>
+            <!-- 内容预览编辑面板（选中素材后显示） -->
+            <div class="content-edit-panel" id="content-edit-panel" style="display:none;">
+                <div class="content-edit-header">
+                    <h3><i class="fas fa-edit"></i> 发布前预览 / 微调</h3>
+                    <span class="save-toast" id="save-toast">已保存 ✓</span>
+                </div>
+                <div class="content-edit-field">
+                    <label>标题</label>
+                    <input type="text" id="edit-title" placeholder="标题…" maxlength="100">
+                </div>
+                <div class="content-edit-field">
+                    <label>正文（钩子 + 内容 + 标签）</label>
+                    <textarea id="edit-desc" rows="8" placeholder="正文内容…"></textarea>
+                </div>
+                <div class="content-edit-actions">
+                    <button class="btn btn-save-edit" id="save-edit-btn">
+                        <i class="fas fa-save"></i> 保存修改
+                    </button>
+                    <button class="btn btn-primary" id="publish-btn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                        发布
+                    </button>
+                    <button class="btn btn-secondary" id="xhs-perfect-btn" disabled>
+                        <i class="fab fa-xhs"></i>
+                        小红书完善
+                    </button>
+                </div>
             </div>
         </main>
     </div>

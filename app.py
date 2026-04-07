@@ -311,6 +311,23 @@ def save_edited_image():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# 读取/更新素材内容 API
+@app.route('/api/publish/content', methods=['GET', 'POST'])
+def publish_content_edit():
+    from backend.controller.publish.publish_controller import PublishController
+    controller = PublishController()
+    if request.method == 'GET':
+        path = request.args.get('path', '')
+        success, data = controller.get_content(path)
+        return jsonify(data), 200 if success else 400
+    else:
+        body = request.json or {}
+        path = body.get('path', '')
+        title = body.get('title', '')
+        desc = body.get('desc', '')
+        success, data = controller.update_content(path, title, desc)
+        return jsonify(data), 200 if success else 400
+
 # 小红书封面自动完善API
 @app.route('/api/publish/xhs_perfect/<path:folder_name>', methods=['POST'])
 def xhs_perfect(folder_name):

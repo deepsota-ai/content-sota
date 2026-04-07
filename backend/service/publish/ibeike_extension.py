@@ -53,11 +53,12 @@ def start_chrome_with_extension():
         print(f"❌ 启动Chrome失败：{e}")
         return False
 
-def connect_to_extension(folder_name):
+def connect_to_extension(folder_name, mode='video'):
     """连接到已打开的Chrome扩展页面
 
     Args:
         folder_name: 发布文件夹名称，用于动态生成文件路径
+        mode: 'video'（视频帖）或 'image'（图文帖）
     """
     # 1. 配置连接到 9223 端口
     co = ChromiumOptions()
@@ -92,17 +93,16 @@ def connect_to_extension(folder_name):
         # 动态获取文件路径
         content_file = f"{base_path}/1.txt"
         
-        # 查找视频文件（支持 .MOV 和 .mov 后缀）
+        # 查找视频文件（仅视频模式需要）
         video_file = None
-        for file in os.listdir(base_path):
-            if file.endswith('.MOV') or file.endswith('.mov'):
-                video_file = f"{base_path}/{file}"
-                break
-        
-        # 如果没有找到视频文件，返回错误
-        if not video_file:
-            print(f"❌ 未找到视频文件，请检查 {base_path} 目录")
-            return False
+        if mode == 'video':
+            for file in os.listdir(base_path):
+                if file.lower().endswith('.mov'):
+                    video_file = f"{base_path}/{file}"
+                    break
+            if not video_file:
+                print(f"❌ 未找到视频文件，请检查 {base_path} 目录")
+                return False
         
         # 封面图片路径
         cover_file = f"{base_path}/1.jpg"
