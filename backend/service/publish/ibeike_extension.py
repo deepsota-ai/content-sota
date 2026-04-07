@@ -12,7 +12,9 @@ load_dotenv(os.path.join(_root, '.env'))
 def _get_config():
     """读取发布相关环境变量，缺失时给出明确提示"""
     chrome_path      = os.getenv("CHROME_PATH",          r"C:\Program Files\Google\Chrome\Application\chrome.exe")
-    user_data_dir    = os.getenv("CHROME_USER_DATA_DIR", r"D:\Users\ChromeAutomationProfile")
+    # Default to user's home directory so it always exists on any machine
+    default_data_dir = os.path.join(os.path.expanduser("~"), "ChromeAutomationProfile")
+    user_data_dir    = os.getenv("CHROME_USER_DATA_DIR", default_data_dir)
     extension_id     = os.getenv("IBEIKE_EXTENSION_ID",  "jejejajkcbhejfiocemmddgbkdlhhngm")
     return chrome_path, user_data_dir, extension_id
 
@@ -25,10 +27,13 @@ def start_chrome_with_extension():
         print(f"❌ 未找到Chrome浏览器：{chrome_path}")
         return False
     
-    # 检查用户数据目录是否存在，不存在则创建
-    if not os.path.exists(user_data_dir):
-        os.makedirs(user_data_dir)
-        print(f"✅ 创建用户数据目录：{user_data_dir}")
+    # 确保用户数据目录存在
+    try:
+        os.makedirs(user_data_dir, exist_ok=True)
+        print(f"✅ 用户数据目录：{user_data_dir}")
+    except Exception as e:
+        print(f"❌ 无法创建用户数据目录 {user_data_dir}：{e}")
+        return False
     
     command = [
         chrome_path,
