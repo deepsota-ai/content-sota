@@ -6,6 +6,7 @@ from backend.controller.content.content_controller import ContentController
 from backend.controller.cover.cover_controller import CoverController
 from backend.controller.publish.publish_controller import PublishController
 from backend.controller.clean.clean_controller import CleanController
+from backend.controller.account.account_controller import AccountController
 
 app = Flask(__name__)
 CORS(app)
@@ -243,11 +244,19 @@ def organize_content():
 @app.route('/api/publish/<path:folder_name>', methods=['POST'])
 def publish_content(folder_name):
     controller = PublishController()
-    success, data = controller.publish_content(folder_name)
+    account_id = (request.json or {}).get('account_id')
+    success, data = controller.publish_content(folder_name, account_id=account_id)
     if success:
         return jsonify(data), 200
     else:
         return jsonify(data), 400
+
+# 异步发布任务状态查询
+@app.route('/api/publish/status/<job_id>', methods=['GET'])
+def publish_job_status(job_id):
+    controller = PublishController()
+    success, data = controller.get_job_status(job_id)
+    return jsonify(data), 200 if success else 404
 
 # 保存编辑后图片API接口
 @app.route('/api/save-edited-image', methods=['POST'])
@@ -341,6 +350,46 @@ def xhs_perfect(folder_name):
             return jsonify({'success': False, 'message': '操作失败，请检查浏览器是否已打开且处于发布编辑状态'}), 500
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# 账号管理API接口
+@app.route('/api/accounts', methods=['GET'])
+def list_accounts():
+    controller = AccountController()
+    success, data = controller.list_accounts()
+    return jsonify(data), 200 if success else 400
+
+@app.route('/api/accounts', methods=['POST'])
+def add_account():
+    controller = AccountController()
+    body = request.json or {}
+    name = body.get('name', '').strip()
+    profile_dir = body.get('profile_dir', '').strip()
+    if not name:
+        return jsonify({'success': False, 'message': '账号名称不能为空'}), 400
+    success, data = controller.add_account_local(name, profile_dir)
+    return jsonify(data), 200 if success else 400
+
+@app.route('/api/accounts/<account_id>', methods=['DELETE'])
+def delete_account(account_id):
+    controller = AccountController()
+    success, data = controller.delete_account(account_id)
+    return jsonify(data), 200 if success else 404
+
+@app.route('/api/accounts/start-qr', methods=['POST'])
+def start_qr_login():
+    controller = AccountController()
+    name = (request.json or {}).get('name', '').strip()
+    success, data = controller.start_qr_login(name)
+    return jsonify(data), 200 if success else 400
+
+@app.route('/api/accounts/qr-status', methods=['GET'])
+def check_qr_status():
+    controller = AccountController()
+    session_id = request.args.get('session_id', '')
+    if not session_id:
+        return jsonify({'success': False, 'message': '缺少session_id'}), 400
+    success, data = controller.check_qr_status(session_id)
+    return jsonify(data), 200 if success else 400
 
 # 清理数据API接口
 @app.route('/api/clean-data', methods=['POST'])

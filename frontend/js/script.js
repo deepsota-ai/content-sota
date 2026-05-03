@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'generateContent': 'content',
             'generateCover': 'cover',
             'publishContent': 'publish',
+            'manageAccounts': 'accounts',
             'generateAd': 'ad'
         };
 
@@ -51,8 +52,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.location.href = 'cover-generator.html';
                 break;
             case 'publish':
-                // 跳转到发布完善页
                 window.location.href = 'publish-page.html';
+                break;
+            case 'accounts':
+                window.location.href = 'accounts-page.html';
                 break;
             case 'ad':
                 // 跳转到广告页

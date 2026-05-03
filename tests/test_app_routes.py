@@ -2,7 +2,7 @@
 import os
 import json
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -136,3 +136,82 @@ class TestSaveEditedImageRoute:
                                json={'imageData': self._b64_jpg(), 'filename': '1'})
         # Should succeed (or fail gracefully with path details)
         assert resp.status_code in (200, 500)  # path mock may vary by OS
+
+
+# ── /api/accounts ─────────────────────────────────────────────────────────────
+
+class TestAccountsRoute:
+    def test_list_returns_accounts(self, client):
+        fake_accounts = [{'id': 'a1', 'name': '官号', 'last_refreshed': '2026-05-03', 'mode': 'local'}]
+        with patch('backend.controller.account.account_controller.AccountController.list_accounts',
+                   return_value=(True, {'success': True, 'accounts': fake_accounts})):
+            resp = client.get('/api/accounts')
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['success'] is True
+        assert data['accounts'][0]['name'] == '官号'
+
+    def test_add_local_account(self, client):
+        with patch('backend.controller.account.account_controller.AccountController.add_account_local',
+                   return_value=(True, {'success': True, 'account': {'id': 'a1', 'name': '纹眉号'}})):
+            resp = client.post('/api/accounts',
+                               json={'name': '纹眉号', 'profile_dir': r'C:\profiles\b'})
+        assert resp.status_code == 200
+        assert resp.get_json()['success'] is True
+
+    def test_add_missing_name_returns_400(self, client):
+        resp = client.post('/api/accounts', json={'profile_dir': '/some/path'})
+        assert resp.status_code == 400
+
+    def test_delete_account(self, client):
+        with patch('backend.controller.account.account_controller.AccountController.delete_account',
+                   return_value=(True, {'success': True})):
+            resp = client.delete('/api/accounts/a1')
+        assert resp.status_code == 200
+
+    def test_delete_nonexistent_returns_404(self, client):
+        with patch('backend.controller.account.account_controller.AccountController.delete_account',
+                   return_value=(False, {'success': False, 'message': '账号不存在'})):
+            resp = client.delete('/api/accounts/ghost')
+        assert resp.status_code == 404
+
+
+# ── /api/publish/status ───────────────────────────────────────────────────────
+
+class TestPublishJobStatus:
+    def test_running_job(self, client):
+        with patch('backend.controller.publish.publish_controller.PublishController.get_job_status',
+                   return_value=(True, {'success': True, 'status': 'running'})):
+            resp = client.get('/api/publish/status/job123')
+        assert resp.status_code == 200
+        assert resp.get_json()['status'] == 'running'
+
+    def test_done_job(self, client):
+        with patch('backend.controller.publish.publish_controller.PublishController.get_job_status',
+                   return_value=(True, {'success': True, 'status': 'done'})):
+            resp = client.get('/api/publish/status/job123')
+        assert resp.status_code == 200
+        assert resp.get_json()['status'] == 'done'
+
+    def test_nonexistent_job_returns_404(self, client):
+        with patch('backend.controller.publish.publish_controller.PublishController.get_job_status',
+                   return_value=(False, {'success': False, 'message': '任务不存在'})):
+            resp = client.get('/api/publish/status/ghost')
+        assert resp.status_code == 404
+
+
+# ── /api/publish with account_id ─────────────────────────────────────────────
+
+class TestPublishWithAccountId:
+    def test_passes_account_id_to_controller(self, client):
+        with patch('backend.controller.publish.publish_controller.PublishController.publish_content',
+                   return_value=(True, {'success': True, 'message': '发布成功'})) as mock_pub:
+            client.post('/api/publish/2026.5.3/素材_1',
+                        json={'account_id': 'a1'})
+        mock_pub.assert_called_once_with('2026.5.3/素材_1', account_id='a1')
+
+    def test_omitted_account_id_passes_none(self, client):
+        with patch('backend.controller.publish.publish_controller.PublishController.publish_content',
+                   return_value=(True, {'success': True, 'message': '发布成功'})) as mock_pub:
+            client.post('/api/publish/2026.5.3/素材_1', json={})
+        mock_pub.assert_called_once_with('2026.5.3/素材_1', account_id=None)

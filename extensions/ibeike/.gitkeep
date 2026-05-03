@@ -1,0 +1,11 @@
+# Place the unpacked iBeike extension files in this directory before building Docker.
+#
+# Steps:
+# 1. Open Chrome and navigate to: chrome://extensions/
+# 2. Find the iBeike (爱贝壳) extension, click "Details"
+# 3. Note the extension ID: jejejajkcbhejfiocemmddgbkdlhhngm
+# 4. Copy the extension folder from:
+#    Windows: %LOCALAPPDATA%\Google\Chrome\User Data\Default\Extensions\jejejajkcbhejfiocemmddgbkdlhhngm\<version>\
+# 5. Paste all files into this directory (extensions/ibeike/)
+# 6. Verify: extensions/ibeike/manifest.json should exist
+# 7. Run: docker compose build

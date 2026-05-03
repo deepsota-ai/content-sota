@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5001:5001"
+    volumes:
+      # Persist user data (publish folders, accounts, material) outside the container
+      - ./data:/app/data
+    environment:
+      - DEPLOY_MODE=cloud
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ACCOUNT_ENCRYPT_KEY=${ACCOUNT_ENCRYPT_KEY}
+    restart: unless-stopped
+    # Chrome inside Docker needs extra shared memory and capabilities
+    shm_size: '2gb'
+    cap_add:
+      - SYS_ADMIN

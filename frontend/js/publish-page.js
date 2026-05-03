@@ -11,11 +11,28 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveToast = document.getElementById('save-toast');
 
     // 当前状态
-    let currentLevel = 'root'; // 'root' (日期列表) 或 'date' (素材列表)
-    let currentDateFolder = null; // 当前选中的日期文件夹名
+    let currentLevel = 'root';
+    let currentDateFolder = null;
     let selectedFolder = null;
     let originalTitle = '';
     let originalDesc = '';
+
+    // Load account list into the selector
+    (async function loadAccountSelector() {
+        const select = document.getElementById('account-select');
+        try {
+            const res  = await fetch('/api/accounts');
+            const data = await res.json();
+            if (data.success && data.accounts.length) {
+                data.accounts.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.id;
+                    opt.textContent = a.name;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (_) { /* ignore, selector stays at default */ }
+    })();
 
     // 返回首页按钮点击事件 - 初始绑定
     backBtn.addEventListener('click', function () {
@@ -243,22 +260,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (publishBtn && !publishBtn.disabled) {
             if (!selectedFolder) { showStatus('error', '请先选择要发布的文件夹'); return; }
+            const accountId = document.getElementById('account-select')?.value || '';
             showStatus('info', `<div class="loading-text"><div class="loading"></div>正在发布内容...</div>`);
             publishBtn.disabled = true;
+            const origLabel = publishBtn.innerHTML;
+            publishBtn.innerHTML = '<span class="publish-spinner"></span>发布中…';
             try {
                 const response = await fetch(`/api/publish/${encodeURIComponent(selectedFolder)}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ account_id: accountId || undefined }),
                 });
                 const data = await response.json();
-                if (data.success) {
-                    showStatus('success', `发布成功：${data.message}`);
-                } else {
+                if (!data.success) {
                     showStatus('error', `发布失败：${data.message}`);
+                    return;
+                }
+                if (data.async && data.job_id) {
+                    // Cloud async: poll for status
+                    showStatus('info', `<div class="loading-text"><div class="loading"></div>发布任务进行中，请稍候…</div>`);
+                    await pollPublishJob(data.job_id);
+                } else {
+                    showStatus('success', `发布成功：${data.message}`);
                 }
             } catch (error) {
                 showStatus('error', `发布失败：${error.message}`);
             } finally {
                 publishBtn.disabled = false;
+                publishBtn.innerHTML = origLabel;
             }
         }
 
@@ -283,6 +312,28 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
+
+    // Poll async cloud publish job until done or error
+    async function pollPublishJob(jobId) {
+        return new Promise((resolve) => {
+            const timer = setInterval(async () => {
+                try {
+                    const res  = await fetch(`/api/publish/status/${jobId}`);
+                    const data = await res.json();
+                    if (data.status === 'done') {
+                        clearInterval(timer);
+                        showStatus('success', '发布成功');
+                        resolve();
+                    } else if (data.status === 'error') {
+                        clearInterval(timer);
+                        showStatus('error', `发布失败：${data.message}`);
+                        resolve();
+                    }
+                    // status === 'running': keep polling
+                } catch (_) { /* keep polling */ }
+            }, 2000);
+        });
+    }
 
     // 显示状态消息
     function showStatus(type, message) {
